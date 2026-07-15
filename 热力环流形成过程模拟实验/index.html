@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>热力环流形成过程模拟实验</title>
+    <link rel="stylesheet" href="./style.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar" aria-labelledby="main-title">
+        <div>
+          <p class="eyebrow">地理实验媒体 | AI 辅助 3D 交互可视化</p>
+          <h1 id="main-title">热力环流形成过程模拟实验</h1>
+          <p class="subtitle">通过 3D 可视化观察冷热不均条件下空气运动与气压差异的形成机制</p>
+        </div>
+        <div class="status-pill" aria-live="polite">
+          当前地表温差：<strong id="delta-readout">10℃</strong>
+        </div>
+      </header>
+
+      <main class="workspace">
+        <section class="scene-panel" aria-label="热力环流三维实验场景">
+          <div id="scene-canvas" class="scene-canvas"></div>
+          <div id="label-layer" class="label-layer" aria-hidden="true"></div>
+          <div class="scene-caption">
+            <span>左侧受热区：近地面 L 低压</span>
+            <span>右侧冷却区：近地面 H 高压</span>
+          </div>
+        </section>
+
+        <aside class="explain-panel" aria-live="polite">
+          <div class="stage-index" id="stage-index">阶段 5 / 5</div>
+          <h2 id="stage-title">阶段五：完整热力环流形成</h2>
+          <p id="stage-description">
+            地表冷热不均引起空气垂直运动，垂直运动导致近地面气压差异，气压差异进一步引起水平气流。
+            垂直运动与水平运动共同作用，最终形成闭合的热力环流。温差越大，环流越明显。
+          </p>
+          <div class="keyword-wrap" id="keyword-wrap" aria-label="关键词"></div>
+          <div class="teaching-tip">
+            <span class="tip-label">课堂提示</span>
+            <p id="stage-tip">观察粒子路径：受热区上升，高空向右，冷却区下沉，近地面向左，构成闭合环流。</p>
+          </div>
+        </aside>
+      </main>
+
+      <footer class="control-panel" aria-label="实验交互控制区">
+        <section class="slider-card" aria-label="地表温差调节">
+          <div class="control-heading">
+            <span>地表温差</span>
+            <output id="delta-output" for="delta-slider">10℃</output>
+          </div>
+          <input
+            id="delta-slider"
+            type="range"
+            min="0"
+            max="20"
+            value="10"
+            step="1"
+            aria-label="调节地表温差，范围为 0 到 20 摄氏度"
+          />
+          <div class="meter" aria-hidden="true">
+            <div id="meter-fill" class="meter-fill"></div>
+          </div>
+        </section>
+
+        <section class="stage-controls" aria-label="实验阶段切换">
+          <button class="stage-btn" data-stage="1" type="button">① 地表受热不均</button>
+          <button class="stage-btn" data-stage="2" type="button">② 空气垂直运动</button>
+          <button class="stage-btn" data-stage="3" type="button">③ 气压差异形成</button>
+          <button class="stage-btn" data-stage="4" type="button">④ 水平气流产生</button>
+          <button class="stage-btn active" data-stage="5" type="button">⑤ 完整热力环流</button>
+        </section>
+
+        <section class="utility-controls" aria-label="播放、重置与标签控制">
+          <button id="play-toggle" class="tool-btn" type="button">暂停动画</button>
+          <button id="reset-btn" class="tool-btn" type="button">重置实验</button>
+          <button id="label-toggle" class="tool-btn" type="button">隐藏标签</button>
+        </section>
+      </footer>
+    </div>
+
+    <script src="./vendor/three.min.js"></script>
+    <script src="./vendor/OrbitControls-legacy.js"></script>
+    <script src="./main.js?v=20260608"></script>
+  </body>
+</html>

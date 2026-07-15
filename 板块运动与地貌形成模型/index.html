@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>板块运动与地貌形成模型</title>
+  <link rel="stylesheet" href="styles.css?v=20260705b">
+</head>
+<body>
+  <main class="app-shell" aria-labelledby="modelTitle">
+    <section class="workbench">
+      <header class="topbar">
+        <div class="title-stack">
+          <p class="kicker">高中地理 · 板块构造</p>
+          <h1 id="modelTitle">板块运动与地貌形成模型</h1>
+        </div>
+
+        <div class="control-cluster" aria-label="模型控制">
+          <button class="tool-button primary" id="playPauseBtn" type="button" aria-label="播放模型">
+            <span class="button-symbol" id="playPauseSymbol" aria-hidden="true">▶</span>
+            <span id="playPauseText">播放</span>
+          </button>
+          <button class="tool-button" id="resetBtn" type="button">
+            <span class="button-symbol" aria-hidden="true">↺</span>
+            <span>重置</span>
+          </button>
+          <button class="icon-only" id="prevStepBtn" type="button" aria-label="上一步">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M15.5 5.5 9 12l6.5 6.5M10 12h10" />
+            </svg>
+          </button>
+          <button class="icon-only" id="nextStepBtn" type="button" aria-label="下一步">
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8.5 5.5 15 12l-6.5 6.5M4 12h10" />
+            </svg>
+          </button>
+          <button class="tool-button export" id="exportBtn" type="button">
+            <span class="button-symbol" aria-hidden="true">⇩</span>
+            <span>导出矢量图</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="stage-layout">
+        <section class="model-card" aria-label="板块运动交互模型">
+          <div class="stage-header">
+            <div>
+              <span class="step-pill" id="stepPill">张裂</span>
+              <strong id="stageCaption">大陆岩石圈受张力拉伸，裂谷开始发育</strong>
+            </div>
+            <output class="progress-value" id="progressValue" for="progressRange">0%</output>
+          </div>
+
+          <div class="svg-frame">
+            <svg id="tectonicSvg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="svgTitle svgDesc">
+              <title id="svgTitle">板块运动与地貌形成模型</title>
+              <desc id="svgDesc">剖面图展示生长边界、消亡边界、海沟、火山弧、褶皱山、地震震源、岩浆上涌和板块运动箭头。</desc>
+              <defs>
+                <linearGradient id="skyGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#d7f0ff" />
+                  <stop offset="1" stop-color="#f8fbff" />
+                </linearGradient>
+                <linearGradient id="oceanGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#55b6d9" />
+                  <stop offset="1" stop-color="#0f7395" />
+                </linearGradient>
+                <linearGradient id="mantleGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#ffb45e" />
+                  <stop offset="0.52" stop-color="#e76f51" />
+                  <stop offset="1" stop-color="#813d2b" />
+                </linearGradient>
+                <linearGradient id="continentGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#b9d78b" />
+                  <stop offset="1" stop-color="#7a9a59" />
+                </linearGradient>
+                <linearGradient id="plateGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stop-color="#677c91" />
+                  <stop offset="1" stop-color="#2f465b" />
+                </linearGradient>
+                <linearGradient id="magmaGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0" stop-color="#fff06b" />
+                  <stop offset="0.42" stop-color="#ff8d35" />
+                  <stop offset="1" stop-color="#d94828" />
+                </linearGradient>
+                <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#1d2d35" flood-opacity="0.16" />
+                </filter>
+                <filter id="magmaGlow" x="-60%" y="-60%" width="220%" height="220%">
+                  <feGaussianBlur stdDeviation="5" result="blur" />
+                  <feMerge>
+                    <feMergeNode in="blur" />
+                    <feMergeNode in="SourceGraphic" />
+                  </feMerge>
+                </filter>
+                <marker id="arrowBlue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse">
+                  <path d="M1 1 11 6 1 11Z" fill="#0f718f" />
+                </marker>
+                <marker id="arrowRed" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="12" markerHeight="12" orient="auto-start-reverse">
+                  <path d="M1 1 11 6 1 11Z" fill="#c2410c" />
+                </marker>
+                <marker id="leaderDot" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="7" markerHeight="7">
+                  <circle cx="5" cy="5" r="3.4" fill="#1f2937" />
+                </marker>
+                <pattern id="sedimentPattern" width="18" height="18" patternUnits="userSpaceOnUse">
+                  <path d="M0 12h18" stroke="#c9d59c" stroke-width="2" opacity="0.42" />
+                  <path d="M8 0v18" stroke="#e5d28d" stroke-width="1.2" opacity="0.28" />
+                </pattern>
+              </defs>
+
+              <rect width="1200" height="720" fill="url(#skyGradient)" />
+              <path d="M0 238 C130 224 220 244 335 232 C438 222 520 240 624 232 C708 224 774 234 832 230 L832 368 L0 368Z" fill="url(#oceanGradient)" />
+              <path d="M760 270 C805 250 850 262 888 246 C946 222 1008 246 1045 232 C1104 210 1150 226 1200 214 L1200 368 L760 368Z" fill="url(#continentGradient)" />
+              <path d="M0 356 C130 356 220 350 342 356 C454 362 542 352 664 358 C710 361 739 372 762 390 C818 432 862 490 922 570 L1200 570 L1200 720 L0 720Z" fill="url(#mantleGradient)" opacity="0.92" />
+              <path d="M0 505 C142 490 248 518 390 503 C562 485 706 510 835 492 C1006 468 1085 498 1200 480 L1200 720 L0 720Z" fill="#6f2e24" opacity="0.23" />
+
+              <g id="riftLayer" filter="url(#softShadow)">
+                <g id="leftPlate">
+                  <path d="M18 356 H484 C492 370 493 398 480 432 H18Z" fill="url(#plateGradient)" />
+                  <path d="M18 356 H484 C492 370 493 398 480 432 H18Z" fill="none" stroke="#1f3446" stroke-width="3" />
+                  <path d="M44 373 H458" stroke="#8fa2b1" stroke-width="2" opacity="0.45" />
+                </g>
+                <g id="rightOceanPlate">
+                  <path d="M516 356 H704 C736 358 756 378 765 412 C760 430 746 438 728 440 H516 C508 413 508 382 516 356Z" fill="url(#plateGradient)" />
+                  <path d="M516 356 H704 C736 358 756 378 765 412 C760 430 746 438 728 440 H516 C508 413 508 382 516 356Z" fill="none" stroke="#1f3446" stroke-width="3" />
+                  <path d="M540 374 H704" stroke="#8fa2b1" stroke-width="2" opacity="0.45" />
+                </g>
+              </g>
+
+              <g id="ridgeMagma" filter="url(#magmaGlow)">
+                <path d="M501 552 C480 514 480 476 498 438 C506 420 506 392 500 364 C526 400 536 439 526 474 C518 505 529 531 548 558Z" fill="url(#magmaGradient)" opacity="0.88" />
+                <path d="M496 579 C464 518 462 456 498 374" fill="none" stroke="#ffd166" stroke-width="7" stroke-linecap="round" stroke-dasharray="14 18" />
+                <path d="M525 578 C546 520 548 456 508 374" fill="none" stroke="#ff6b35" stroke-width="6" stroke-linecap="round" stroke-dasharray="11 20" />
+              </g>
+
+              <g id="ridgeFeature">
+                <path d="M462 356 L500 318 L538 356 Z" fill="#4f718b" stroke="#263f53" stroke-width="3" />
+                <path d="M486 354 C493 340 507 340 515 354" fill="none" stroke="#f6bd60" stroke-width="5" stroke-linecap="round" />
+                <path d="M500 318 L500 376" stroke="#ef4444" stroke-width="4" stroke-dasharray="9 8" id="riftCrack" />
+              </g>
+
+              <g id="subductionLayer">
+                <path id="subductingSlab" d="M684 360 C717 372 742 397 770 431 C811 480 849 527 906 592 L865 618 C819 566 780 520 736 472 C714 448 694 438 662 431 Z" fill="#3a5268" stroke="#203346" stroke-width="3" />
+                <path d="M692 358 C704 374 719 386 736 358" fill="none" stroke="#132c3b" stroke-width="7" stroke-linecap="round" />
+                <path d="M691 365 C706 382 721 392 739 366" fill="none" stroke="#f7f7f2" stroke-width="3" stroke-linecap="round" opacity="0.74" />
+                <path d="M756 386 C796 430 833 474 873 524" fill="none" stroke="#fca311" stroke-width="8" stroke-linecap="round" stroke-dasharray="8 17" opacity="0.82" />
+              </g>
+
+              <g id="continentPlate" filter="url(#softShadow)">
+                <path d="M752 360 C790 340 821 348 856 337 C920 317 973 337 1018 329 C1072 319 1126 333 1200 318 L1200 494 H792 C783 446 768 394 752 360Z" fill="#89684b" stroke="#4f3827" stroke-width="3" />
+                <path d="M778 360 C832 344 886 354 938 340 C1010 320 1103 337 1200 326 L1200 362 C1100 353 1018 364 936 354 C872 346 824 362 778 378Z" fill="url(#sedimentPattern)" opacity="0.8" />
+              </g>
+
+              <g id="volcanoArc">
+                <path d="M842 340 L890 250 L940 340Z" fill="#77634d" stroke="#4f3827" stroke-width="3" />
+                <path d="M880 268 L890 250 L901 268 C894 274 887 274 880 268Z" fill="#2c2f33" />
+                <path d="M890 250 C880 224 895 207 874 189 C902 197 914 222 904 247Z" fill="#9ca3af" opacity="0.65" />
+                <path d="M905 340 L952 276 L1006 340Z" fill="#6f604a" stroke="#4f3827" stroke-width="3" />
+                <path d="M942 291 L952 276 L964 292 C957 298 949 298 942 291Z" fill="#2c2f33" />
+                <path d="M900 330 C897 306 894 289 890 267" fill="none" stroke="#f97316" stroke-width="5" stroke-linecap="round" />
+                <path d="M958 331 C956 311 954 300 952 291" fill="none" stroke="#f97316" stroke-width="4" stroke-linecap="round" />
+              </g>
+
+              <g id="foldMountains">
+                <path d="M1000 340 L1033 288 L1060 339 L1095 278 L1133 340 L1168 295 L1200 340 L1200 368 H1000Z" fill="#8a7f62" stroke="#5a4b34" stroke-width="3" />
+                <path d="M1018 337 C1038 314 1053 314 1071 337 C1096 306 1120 306 1144 337 C1164 316 1181 318 1198 337" fill="none" stroke="#f6f1d5" stroke-width="5" stroke-linecap="round" opacity="0.86" />
+                <path d="M1020 386 C1054 356 1098 417 1132 384 C1150 367 1170 367 1194 386" fill="none" stroke="#634832" stroke-width="7" stroke-linecap="round" />
+                <path d="M1005 410 C1042 374 1090 440 1132 406 C1152 388 1176 388 1200 408" fill="none" stroke="#9a6742" stroke-width="6" stroke-linecap="round" />
+              </g>
+
+              <g id="earthquakeGroup">
+                <circle class="quake-ring" cx="766" cy="425" r="18" />
+                <circle class="quake-focus" cx="766" cy="425" r="7" />
+                <circle class="quake-ring" cx="820" cy="486" r="16" />
+                <circle class="quake-focus" cx="820" cy="486" r="7" />
+                <circle class="quake-ring" cx="876" cy="548" r="15" />
+                <circle class="quake-focus" cx="876" cy="548" r="7" />
+              </g>
+
+              <g id="motionArrows">
+                <path id="leftMotionArrow" d="M455 302 H332" class="motion-arrow blue" marker-end="url(#arrowBlue)" />
+                <path id="rightMotionArrow" d="M552 302 H676" class="motion-arrow blue" marker-end="url(#arrowBlue)" />
+                <path id="subductionArrow" d="M650 284 C710 302 746 334 772 391" class="motion-arrow red" marker-end="url(#arrowRed)" />
+                <path id="collisionArrow" d="M1140 286 H1040" class="motion-arrow red" marker-end="url(#arrowRed)" />
+              </g>
+
+              <g id="labels" class="svg-labels">
+                <g class="label" transform="translate(420 210)">
+                  <rect width="170" height="38" rx="10" />
+                  <text x="85" y="25" text-anchor="middle">生长边界</text>
+                  <path d="M86 38 L84 98" class="leader" />
+                </g>
+                <g class="label" transform="translate(548 438)">
+                  <rect width="156" height="38" rx="10" />
+                  <text x="78" y="25" text-anchor="middle">岩浆上涌</text>
+                  <path d="M22 18 L-30 84" class="leader" />
+                </g>
+                <g class="label" transform="translate(252 262)">
+                  <rect width="182" height="38" rx="10" />
+                  <text x="91" y="25" text-anchor="middle">板块运动箭头</text>
+                </g>
+                <g class="label" transform="translate(616 206)">
+                  <rect width="170" height="38" rx="10" />
+                  <text x="85" y="25" text-anchor="middle">消亡边界</text>
+                  <path d="M92 38 L102 145" class="leader" />
+                </g>
+                <g class="label" transform="translate(648 382)">
+                  <rect width="116" height="36" rx="10" />
+                  <text x="58" y="24" text-anchor="middle">海沟</text>
+                  <path d="M58 2 L61 -24" class="leader" />
+                </g>
+                <g class="label" transform="translate(832 178)">
+                  <rect width="132" height="38" rx="10" />
+                  <text x="66" y="25" text-anchor="middle">火山弧</text>
+                  <path d="M66 38 L58 70" class="leader" />
+                </g>
+                <g class="label" transform="translate(1014 190)">
+                  <rect width="138" height="38" rx="10" />
+                  <text x="69" y="25" text-anchor="middle">褶皱山</text>
+                  <path d="M70 38 L58 92" class="leader" />
+                </g>
+                <g class="label" transform="translate(878 462)">
+                  <rect width="142" height="38" rx="10" />
+                  <text x="71" y="25" text-anchor="middle">地震震源</text>
+                  <path d="M3 18 L-49 23" class="leader" marker-end="url(#leaderDot)" />
+                </g>
+              </g>
+
+              <g class="axis-note">
+                <rect x="38" y="628" width="268" height="48" rx="12" />
+                <text x="58" y="650">横向：板块相对运动</text>
+                <text x="58" y="670">纵向：岩石圈—软流圈剖面</text>
+              </g>
+            </svg>
+          </div>
+
+          <div class="timeline-row">
+            <label for="progressRange">演化进度</label>
+            <input id="progressRange" type="range" min="0" max="100" value="0" step="1">
+            <span id="timeLabel">0 Ma</span>
+          </div>
+        </section>
+
+        <aside class="info-panel" aria-live="polite">
+          <div class="info-heading">
+            <span class="info-index" id="infoIndex">01</span>
+            <div>
+              <p class="panel-kicker">课堂观察</p>
+              <h2 id="infoTitle">张裂：岩石圈被拉伸</h2>
+            </div>
+          </div>
+          <p class="info-copy" id="infoCopy">地幔热物质上升，岩石圈受张力变薄并产生断裂，裂谷带和正断层开始出现。</p>
+          <ul class="evidence-list" id="evidenceList">
+            <li>张力作用使两侧板块相背运动。</li>
+            <li>裂隙为岩浆上涌提供通道。</li>
+            <li>早期地貌以裂谷、断层陡崖为主。</li>
+          </ul>
+          <div class="concept-box">
+            <span>关键判读</span>
+            <strong id="conceptText">看箭头方向：相背运动对应生长边界的起点。</strong>
+          </div>
+        </aside>
+      </div>
+
+      <nav class="step-strip" aria-label="底部演化步骤">
+        <button class="step-button active" type="button" data-step="0">
+          <span>01</span>
+          张裂
+        </button>
+        <button class="step-button" type="button" data-step="1">
+          <span>02</span>
+          洋中脊
+        </button>
+        <button class="step-button" type="button" data-step="2">
+          <span>03</span>
+          俯冲
+        </button>
+        <button class="step-button" type="button" data-step="3">
+          <span>04</span>
+          火山地震
+        </button>
+        <button class="step-button" type="button" data-step="4">
+          <span>05</span>
+          碰撞造山
+        </button>
+        <button class="step-button" type="button" data-step="5">
+          <span>06</span>
+          地貌总结
+        </button>
+      </nav>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

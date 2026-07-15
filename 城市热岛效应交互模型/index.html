@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>城市热岛效应模型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell">
+    <section class="model-layout" aria-label="城市热岛效应交互模型">
+      <div class="model-area">
+        <header class="control-strip">
+          <div class="title-block">
+            <h1>城市热岛效应模型</h1>
+            <p id="stepKicker">步骤 1 / 7 · 下垫面</p>
+          </div>
+
+          <div class="control-actions" aria-label="模型控制">
+            <button class="icon-button primary" id="playPause" type="button" aria-label="播放" title="播放">
+              <span id="playIcon" aria-hidden="true">▶</span>
+            </button>
+            <button class="icon-button" id="resetBtn" type="button" aria-label="重置" title="重置">
+              <span aria-hidden="true">↺</span>
+            </button>
+            <label class="progress-control" for="progressRange">
+              <span id="progressText">1/7</span>
+              <input id="progressRange" type="range" min="0" max="6" step="1" value="0" aria-label="进度条">
+            </label>
+            <button class="export-button" id="exportSvg" type="button">
+              <span aria-hidden="true">⇩</span>
+              导出矢量图
+            </button>
+          </div>
+        </header>
+
+        <div class="svg-wrap">
+          <svg id="heatIslandSvg" class="model-svg step-0" viewBox="0 0 1280 820" role="img" aria-labelledby="svgTitle svgDesc" xmlns="http://www.w3.org/2000/svg">
+            <title id="svgTitle">城市热岛效应模型</title>
+            <desc id="svgDesc">高中地理课堂用交互 SVG，展示城市下垫面、热岛环流、污染物抬升、绿地水体降温、夜间热岛和治理措施。</desc>
+            <defs>
+              <linearGradient id="skyDay" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#bfe7ff"/>
+                <stop offset="0.55" stop-color="#eaf7ff"/>
+                <stop offset="1" stop-color="#fff4d8"/>
+              </linearGradient>
+              <linearGradient id="skyNight" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0" stop-color="#17203a"/>
+                <stop offset="0.6" stop-color="#28385a"/>
+                <stop offset="1" stop-color="#556072"/>
+              </linearGradient>
+              <linearGradient id="cityWarm" x1="0" x2="0" y1="1" y2="0">
+                <stop offset="0" stop-color="#e94b35" stop-opacity="0.72"/>
+                <stop offset="0.62" stop-color="#ff9f43" stop-opacity="0.35"/>
+                <stop offset="1" stop-color="#ffe8a6" stop-opacity="0"/>
+              </linearGradient>
+              <radialGradient id="heatDomeGradient" cx="50%" cy="55%" r="58%">
+                <stop offset="0" stop-color="#ff6b35" stop-opacity="0.45"/>
+                <stop offset="0.58" stop-color="#ffb84d" stop-opacity="0.20"/>
+                <stop offset="1" stop-color="#ffe9b8" stop-opacity="0"/>
+              </radialGradient>
+              <radialGradient id="coolGradient" cx="50%" cy="50%" r="55%">
+                <stop offset="0" stop-color="#34c6e8" stop-opacity="0.45"/>
+                <stop offset="1" stop-color="#34c6e8" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="softBlur" x="-30%" y="-30%" width="160%" height="160%">
+                <feGaussianBlur stdDeviation="8"/>
+              </filter>
+              <filter id="shadow" x="-20%" y="-30%" width="140%" height="160%">
+                <feDropShadow dx="0" dy="9" stdDeviation="9" flood-color="#263238" flood-opacity="0.22"/>
+              </filter>
+              <marker id="arrowHot" viewBox="0 0 10 10" refX="8.4" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#e5482f"/>
+              </marker>
+              <marker id="arrowCool" viewBox="0 0 10 10" refX="8.4" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#168aad"/>
+              </marker>
+              <marker id="arrowAir" viewBox="0 0 10 10" refX="8.4" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#56616f"/>
+              </marker>
+            </defs>
+
+            <style><![CDATA[
+              .model-svg * { vector-effect: non-scaling-stroke; }
+              .sky-night, .moon, .stars, .night-phase { opacity: 0; transition: opacity .45s ease; }
+              .day-star { opacity: 1; transition: opacity .45s ease; }
+              .phase { opacity: 0; transition: opacity .45s ease, transform .45s ease; }
+              .label-text { font: 700 24px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #1f2d3a; paint-order: stroke; stroke: rgba(255,255,255,.9); stroke-width: 7px; stroke-linejoin: round; }
+              .small-label { font-size: 19px; font-weight: 650; }
+              .tiny-label { font-size: 16px; font-weight: 650; }
+              .metric-label { font: 800 22px "Microsoft YaHei", Arial, sans-serif; fill: #8f2f20; paint-order: stroke; stroke: #fff; stroke-width: 7px; stroke-linejoin: round; }
+              .caption-box { fill: rgba(255,255,255,.9); stroke: rgba(53,70,86,.22); stroke-width: 1.4; rx: 10; }
+              .surface-line { stroke: #2f4858; stroke-width: 2.2; stroke-dasharray: 5 8; fill: none; }
+              .heat-line { stroke: #e5482f; stroke-width: 7; stroke-linecap: round; fill: none; marker-end: url(#arrowHot); opacity: .82; }
+              .cool-line { stroke: #168aad; stroke-width: 6; stroke-linecap: round; fill: none; marker-end: url(#arrowCool); opacity: .86; }
+              .air-line { stroke: #56616f; stroke-width: 5.6; stroke-linecap: round; fill: none; marker-end: url(#arrowAir); opacity: .78; }
+              .thin-air { stroke-width: 3.8; stroke-dasharray: 9 9; }
+              .heat-glow { fill: url(#cityWarm); filter: url(#softBlur); }
+              .dome { fill: url(#heatDomeGradient); stroke: #ff7b3d; stroke-width: 3; stroke-dasharray: 10 10; opacity: .76; }
+              .cool-spot { fill: url(#coolGradient); }
+              .building { fill: #7b8794; stroke: #46515c; stroke-width: 2; }
+              .building-dark { fill: #65717e; }
+              .window { fill: #ffe08a; opacity: .86; }
+              .roof-hot { fill: #d64b3b; opacity: .62; }
+              .road { fill: #303841; }
+              .lane { stroke: #f7d77a; stroke-width: 5; stroke-dasharray: 28 26; }
+              .park { fill: #54b96f; stroke: #2f8249; stroke-width: 2; }
+              .water { fill: #3aaed8; stroke: #1976a2; stroke-width: 2; }
+              .farm { fill: #c8d66b; stroke: #91a540; stroke-width: 2; }
+              .soil { fill: #d9b36a; }
+              .smoke { fill: #5f6672; opacity: .72; }
+              .particle { fill: #3f4651; opacity: .76; }
+              .mitigation-tag { fill: #f9fbff; stroke: #4d7c59; stroke-width: 2; rx: 10; }
+              .green-roof { fill: #3fa45b; stroke: #1f6c38; stroke-width: 2; }
+              .cool-roof { fill: #f6fbff; stroke: #83b9d6; stroke-width: 2; }
+              .permeable { fill: #b7a27e; stroke: #79684e; stroke-width: 2; stroke-dasharray: 4 5; }
+              .step-0 .surface-phase,
+              .step-1 .surface-phase,
+              .step-2 .surface-phase,
+              .step-3 .surface-phase,
+              .step-4 .surface-phase,
+              .step-5 .surface-phase,
+              .step-6 .surface-phase { opacity: 1; }
+              .step-1 .warming-phase,
+              .step-2 .warming-phase,
+              .step-3 .warming-phase,
+              .step-4 .warming-phase,
+              .step-5 .warming-phase,
+              .step-6 .warming-phase { opacity: 1; }
+              .step-2 .circulation-phase,
+              .step-3 .circulation-phase,
+              .step-4 .circulation-phase,
+              .step-5 .circulation-phase,
+              .step-6 .circulation-phase { opacity: 1; }
+              .step-3 .pollution-phase,
+              .step-4 .pollution-phase,
+              .step-5 .pollution-phase,
+              .step-6 .pollution-phase { opacity: 1; }
+              .step-4 .cooling-phase,
+              .step-5 .cooling-phase,
+              .step-6 .cooling-phase { opacity: 1; }
+              .step-5 .sky-night,
+              .step-5 .moon,
+              .step-5 .stars,
+              .step-5 .night-phase { opacity: 1; }
+              .step-5 .day-star { opacity: 0; }
+              .step-5 .dome { opacity: .92; }
+              .step-5 .heat-glow { opacity: .92; }
+              .step-6 .mitigation-phase { opacity: 1; }
+              .step-6 .dome { opacity: .32; }
+              .step-6 .heat-glow { opacity: .45; }
+              .is-playing .heat-wave { animation: heatRise 2.4s ease-in-out infinite; }
+              .is-playing .cool-wave { animation: coolPulse 2.2s ease-in-out infinite; }
+              .is-playing .particle { animation: driftUp 3s ease-in-out infinite; }
+              .is-playing .air-line { animation: dashMove 2.2s linear infinite; }
+              @keyframes heatRise {
+                0%, 100% { transform: translateY(0); opacity: .64; }
+                50% { transform: translateY(-14px); opacity: 1; }
+              }
+              @keyframes coolPulse {
+                0%, 100% { transform: translateY(0); opacity: .58; }
+                50% { transform: translateY(-8px); opacity: 1; }
+              }
+              @keyframes driftUp {
+                0% { transform: translateY(12px); opacity: .2; }
+                55% { opacity: .88; }
+                100% { transform: translateY(-22px); opacity: .18; }
+              }
+              @keyframes dashMove {
+                to { stroke-dashoffset: -48; }
+              }
+            ]]></style>
+
+            <rect width="1280" height="820" fill="url(#skyDay)"/>
+            <rect class="sky-night" width="1280" height="820" fill="url(#skyNight)"/>
+            <g class="stars">
+              <circle cx="116" cy="82" r="3" fill="#fff6c7"/>
+              <circle cx="214" cy="132" r="2.4" fill="#fff6c7"/>
+              <circle cx="1014" cy="96" r="3.4" fill="#fff6c7"/>
+              <circle cx="1128" cy="164" r="2.5" fill="#fff6c7"/>
+              <circle cx="860" cy="64" r="2.3" fill="#fff6c7"/>
+            </g>
+            <g class="day-star">
+              <circle cx="1070" cy="108" r="48" fill="#ffd65a"/>
+              <circle cx="1070" cy="108" r="72" fill="#ffd65a" opacity=".23"/>
+              <path d="M1070 22v34M1070 160v34M984 108h34M1122 108h34M1010 48l24 24M1106 144l24 24M1130 48l-24 24M1034 144l-24 24" stroke="#f7b333" stroke-width="8" stroke-linecap="round"/>
+            </g>
+            <g class="moon">
+              <circle cx="1080" cy="110" r="45" fill="#f8f1ce"/>
+              <circle cx="1097" cy="96" r="45" fill="#28385a"/>
+            </g>
+
+            <path d="M0 610 C160 548 274 562 420 607 C564 650 714 650 884 604 C1036 562 1158 564 1280 616 L1280 820 L0 820 Z" fill="#d1d7c8"/>
+            <path d="M0 682 C200 655 356 664 540 686 C746 712 996 700 1280 664 L1280 820 L0 820 Z" fill="#b7c789"/>
+            <path d="M0 715 H1280 V820 H0 Z" fill="#a88861"/>
+
+            <g id="coolSurfaces">
+              <path class="water" d="M76 656 C132 618 216 622 266 664 C300 694 364 686 416 660 C454 640 488 646 518 674 C466 722 390 742 310 720 C220 695 158 724 92 746 C50 720 38 684 76 656 Z"/>
+              <path class="park" d="M922 640 C984 606 1084 614 1136 660 C1178 698 1164 746 1094 762 C1018 780 930 748 898 708 C880 684 890 658 922 640 Z"/>
+              <path class="farm" d="M40 710 L238 685 L238 820 L40 820 Z"/>
+              <path class="farm" d="M1040 720 L1240 690 L1240 820 L1040 820 Z"/>
+              <g stroke="#91a540" stroke-width="2" opacity=".56">
+                <path d="M58 735 L220 714"/>
+                <path d="M58 766 L220 744"/>
+                <path d="M58 797 L220 775"/>
+                <path d="M1060 744 L1224 720"/>
+                <path d="M1060 778 L1224 752"/>
+                <path d="M1060 810 L1224 784"/>
+              </g>
+            </g>
+
+            <g id="cityBase">
+              <path class="soil" d="M342 684 C448 644 806 636 920 688 L920 820 H342 Z"/>
+              <rect class="road" x="354" y="702" width="570" height="96" rx="12"/>
+              <path class="lane" d="M374 750 H904"/>
+              <path d="M354 701 C452 668 810 666 924 702" fill="#414a53" opacity=".72"/>
+            </g>
+
+            <g id="buildings" filter="url(#shadow)">
+              <rect class="building building-dark" x="456" y="390" width="82" height="286" rx="6"/>
+              <rect class="building" x="544" y="324" width="92" height="354" rx="6"/>
+              <rect class="building building-dark" x="646" y="360" width="84" height="318" rx="6"/>
+              <rect class="building" x="738" y="286" width="104" height="394" rx="6"/>
+              <rect class="building building-dark" x="852" y="430" width="66" height="250" rx="6"/>
+              <rect class="building" x="394" y="474" width="54" height="204" rx="5"/>
+              <rect class="building" x="926" y="500" width="48" height="178" rx="5"/>
+              <g>
+                <rect class="roof-hot" x="462" y="390" width="70" height="16" rx="4"/>
+                <rect class="roof-hot" x="552" y="324" width="76" height="16" rx="4"/>
+                <rect class="roof-hot" x="654" y="360" width="68" height="16" rx="4"/>
+                <rect class="roof-hot" x="748" y="286" width="84" height="16" rx="4"/>
+                <rect class="roof-hot" x="858" y="430" width="54" height="16" rx="4"/>
+              </g>
+              <g class="windows">
+                <g transform="translate(470 424)">
+                  <rect class="window" width="12" height="16"/><rect class="window" x="26" width="12" height="16"/><rect class="window" x="52" width="12" height="16"/>
+                  <rect class="window" y="42" width="12" height="16"/><rect class="window" x="26" y="42" width="12" height="16"/><rect class="window" x="52" y="42" width="12" height="16"/>
+                  <rect class="window" y="84" width="12" height="16"/><rect class="window" x="26" y="84" width="12" height="16"/><rect class="window" x="52" y="84" width="12" height="16"/>
+                  <rect class="window" y="126" width="12" height="16"/><rect class="window" x="26" y="126" width="12" height="16"/><rect class="window" x="52" y="126" width="12" height="16"/>
+                </g>
+                <g transform="translate(562 360)">
+                  <rect class="window" width="13" height="17"/><rect class="window" x="30" width="13" height="17"/><rect class="window" x="60" width="13" height="17"/>
+                  <rect class="window" y="48" width="13" height="17"/><rect class="window" x="30" y="48" width="13" height="17"/><rect class="window" x="60" y="48" width="13" height="17"/>
+                  <rect class="window" y="96" width="13" height="17"/><rect class="window" x="30" y="96" width="13" height="17"/><rect class="window" x="60" y="96" width="13" height="17"/>
+                  <rect class="window" y="144" width="13" height="17"/><rect class="window" x="30" y="144" width="13" height="17"/><rect class="window" x="60" y="144" width="13" height="17"/>
+                  <rect class="window" y="192" width="13" height="17"/><rect class="window" x="30" y="192" width="13" height="17"/><rect class="window" x="60" y="192" width="13" height="17"/>
+                </g>
+                <g transform="translate(666 396)">
+                  <rect class="window" width="13" height="17"/><rect class="window" x="28" width="13" height="17"/><rect class="window" x="56" width="13" height="17"/>
+                  <rect class="window" y="50" width="13" height="17"/><rect class="window" x="28" y="50" width="13" height="17"/><rect class="window" x="56" y="50" width="13" height="17"/>
+                  <rect class="window" y="100" width="13" height="17"/><rect class="window" x="28" y="100" width="13" height="17"/><rect class="window" x="56" y="100" width="13" height="17"/>
+                  <rect class="window" y="150" width="13" height="17"/><rect class="window" x="28" y="150" width="13" height="17"/><rect class="window" x="56" y="150" width="13" height="17"/>
+                </g>
+                <g transform="translate(760 326)">
+                  <rect class="window" width="14" height="18"/><rect class="window" x="32" width="14" height="18"/><rect class="window" x="64" width="14" height="18"/>
+                  <rect class="window" y="54" width="14" height="18"/><rect class="window" x="32" y="54" width="14" height="18"/><rect class="window" x="64" y="54" width="14" height="18"/>
+                  <rect class="window" y="108" width="14" height="18"/><rect class="window" x="32" y="108" width="14" height="18"/><rect class="window" x="64" y="108" width="14" height="18"/>
+                  <rect class="window" y="162" width="14" height="18"/><rect class="window" x="32" y="162" width="14" height="18"/><rect class="window" x="64" y="162" width="14" height="18"/>
+                  <rect class="window" y="216" width="14" height="18"/><rect class="window" x="32" y="216" width="14" height="18"/><rect class="window" x="64" y="216" width="14" height="18"/>
+                </g>
+              </g>
+            </g>
+
+            <g id="surfacePhase" class="phase surface-phase">
+              <rect class="caption-box" x="78" y="574" width="162" height="40"/>
+              <text class="label-text small-label" x="98" y="601">水体降温</text>
+              <path class="surface-line" d="M160 614 C176 638 204 648 238 654"/>
+
+              <rect class="caption-box" x="918" y="582" width="178" height="40"/>
+              <text class="label-text small-label" x="940" y="609">绿地蒸散</text>
+              <path class="surface-line" d="M1004 622 C1010 646 1012 660 1016 682"/>
+
+              <rect class="caption-box" x="430" y="238" width="230" height="42"/>
+              <text class="label-text small-label" x="452" y="266">建筑密度高</text>
+              <path class="surface-line" d="M540 280 C562 316 584 338 604 354"/>
+
+              <rect class="caption-box" x="642" y="716" width="182" height="42"/>
+              <text class="label-text small-label" x="663" y="744">沥青路面</text>
+              <path class="surface-line" d="M716 716 C710 700 696 692 682 686"/>
+
+              <rect class="caption-box" x="72" y="742" width="168" height="42"/>
+              <text class="label-text small-label" x="94" y="770">郊区农田</text>
+            </g>
+
+            <g id="warmingPhase" class="phase warming-phase">
+              <path class="heat-glow" d="M388 698 C472 602 830 586 926 700 L926 820 H388 Z"/>
+              <g>
+                <path class="heat-line heat-wave" d="M1010 162 C930 230 876 308 820 400"/>
+                <path class="heat-line heat-wave" d="M1046 170 C964 268 906 358 880 486"/>
+                <path class="heat-line heat-wave" d="M968 174 C884 256 786 340 716 456"/>
+                <path class="heat-line heat-wave" d="M920 188 C788 314 626 394 548 536"/>
+              </g>
+              <g opacity=".88">
+                <ellipse cx="666" cy="690" rx="238" ry="42" fill="#f05a37" opacity=".30"/>
+                <ellipse cx="666" cy="694" rx="158" ry="24" fill="#ffbf47" opacity=".42"/>
+              </g>
+              <rect class="caption-box" x="920" y="238" width="244" height="46"/>
+              <text class="label-text small-label" x="942" y="268">短波辐射输入</text>
+              <rect class="caption-box" x="338" y="586" width="232" height="46"/>
+              <text class="label-text small-label" x="360" y="616">硬化面吸热蓄热</text>
+              <text class="metric-label" x="604" y="648">城区升温更快</text>
+              <g>
+                <rect x="884" y="652" width="56" height="28" fill="#42515e" rx="6"/>
+                <circle cx="894" cy="684" r="9" fill="#1d252c"/>
+                <circle cx="930" cy="684" r="9" fill="#1d252c"/>
+                <path d="M910 642 h16 l10 10 h-36 z" fill="#576879"/>
+                <path d="M884 646 C848 624 840 598 856 566" stroke="#e5482f" stroke-width="5" fill="none" opacity=".65"/>
+                <text class="label-text tiny-label" x="840" y="556">人为热</text>
+              </g>
+            </g>
+
+            <g id="circulationPhase" class="phase circulation-phase">
+              <ellipse class="dome" cx="660" cy="470" rx="360" ry="270"/>
+              <path class="heat-line heat-wave" d="M622 662 C600 574 610 494 650 420 C680 364 698 314 682 256"/>
+              <path class="heat-line heat-wave" d="M706 662 C734 574 730 492 690 418 C658 360 646 314 666 260"/>
+              <path class="air-line" d="M306 668 C410 656 496 640 574 604"/>
+              <path class="air-line" d="M1014 668 C910 656 826 640 746 604"/>
+              <path class="air-line thin-air" d="M720 250 C820 214 924 218 1042 268"/>
+              <path class="air-line thin-air" d="M600 250 C498 214 394 218 276 268"/>
+              <rect class="caption-box" x="516" y="178" width="294" height="46"/>
+              <text class="label-text small-label" x="538" y="208">暖空气上升形成低压</text>
+              <rect class="caption-box" x="176" y="628" width="196" height="42"/>
+              <text class="label-text small-label" x="198" y="656">郊区冷空气补偿</text>
+              <rect class="caption-box" x="884" y="628" width="196" height="42"/>
+              <text class="label-text small-label" x="906" y="656">近地面流向城区</text>
+            </g>
+
+            <g id="pollutionPhase" class="phase pollution-phase">
+              <g>
+                <rect x="384" y="594" width="62" height="86" fill="#5b6670" stroke="#2d353d" stroke-width="2"/>
+                <rect x="394" y="560" width="16" height="42" fill="#4c5660"/>
+                <rect x="420" y="548" width="16" height="54" fill="#4c5660"/>
+                <path class="smoke" d="M402 548 C378 520 392 488 428 486 C466 486 474 446 440 430 C514 438 542 486 500 534 C472 566 430 568 402 548 Z"/>
+                <circle class="particle" cx="420" cy="520" r="8"/>
+                <circle class="particle" cx="470" cy="482" r="6"/>
+                <circle class="particle" cx="506" cy="532" r="7"/>
+              </g>
+              <g>
+                <circle class="particle" cx="602" cy="512" r="7"/>
+                <circle class="particle" cx="646" cy="460" r="8"/>
+                <circle class="particle" cx="692" cy="408" r="7"/>
+                <circle class="particle" cx="728" cy="352" r="6"/>
+                <circle class="particle" cx="666" cy="308" r="7"/>
+                <circle class="particle" cx="594" cy="362" r="5"/>
+              </g>
+              <path class="air-line thin-air" d="M438 542 C526 478 606 416 652 302"/>
+              <rect class="caption-box" x="252" y="452" width="224" height="46"/>
+              <text class="label-text small-label" x="274" y="482">污染物被抬升</text>
+              <rect class="caption-box" x="694" y="292" width="258" height="46"/>
+              <text class="label-text small-label" x="716" y="322">随热岛环流扩散</text>
+            </g>
+
+            <g id="coolingPhase" class="phase cooling-phase">
+              <ellipse class="cool-spot" cx="246" cy="676" rx="176" ry="96"/>
+              <ellipse class="cool-spot" cx="1016" cy="690" rx="178" ry="96"/>
+              <path class="cool-line cool-wave" d="M224 660 C252 620 282 594 330 574"/>
+              <path class="cool-line cool-wave" d="M1008 674 C980 630 952 600 910 578"/>
+              <path class="cool-line cool-wave" d="M1082 686 C1118 642 1140 610 1150 564"/>
+              <path class="cool-line thin-air" d="M294 624 C430 592 500 592 604 620"/>
+              <path class="cool-line thin-air" d="M958 628 C842 592 780 592 700 620"/>
+              <rect class="caption-box" x="138" y="502" width="242" height="46"/>
+              <text class="label-text small-label" x="160" y="532">水体比热大，升温慢</text>
+              <rect class="caption-box" x="958" y="510" width="226" height="46"/>
+              <text class="label-text small-label" x="980" y="540">植被蒸散带走热量</text>
+              <text class="metric-label" x="904" y="748">局地降温</text>
+            </g>
+
+            <g id="nightPhase" class="phase night-phase">
+              <rect x="0" y="0" width="1280" height="820" fill="#12213a" opacity=".36"/>
+              <ellipse cx="660" cy="650" rx="326" ry="78" fill="#ff6b35" opacity=".42" filter="url(#softBlur)"/>
+              <path class="heat-line heat-wave" d="M520 690 C520 632 536 594 570 556"/>
+              <path class="heat-line heat-wave" d="M638 694 C650 626 650 584 630 536"/>
+              <path class="heat-line heat-wave" d="M806 690 C794 632 778 594 744 556"/>
+              <rect class="caption-box" x="506" y="86" width="286" height="48"/>
+              <text class="label-text small-label" x="528" y="117">夜间热岛更强</text>
+              <rect class="caption-box" x="382" y="552" width="280" height="46"/>
+              <text class="label-text small-label" x="404" y="582">建筑和路面释放储热</text>
+              <rect class="caption-box" x="766" y="590" width="224" height="46"/>
+              <text class="label-text small-label" x="788" y="620">风弱，散热慢</text>
+              <text class="metric-label" x="118" y="674">郊区 27°C</text>
+              <text class="metric-label" x="588" y="720">城区 31°C</text>
+              <text class="metric-label" x="1016" y="674">郊区 27°C</text>
+            </g>
+
+            <g id="mitigationPhase" class="phase mitigation-phase">
+              <rect class="green-roof" x="462" y="382" width="70" height="18" rx="4"/>
+              <rect class="green-roof" x="858" y="422" width="54" height="18" rx="4"/>
+              <rect class="cool-roof" x="552" y="316" width="76" height="18" rx="4"/>
+              <rect class="cool-roof" x="748" y="278" width="84" height="18" rx="4"/>
+              <path class="cool-line" d="M590 304 C564 266 552 232 556 190"/>
+              <path class="cool-line" d="M790 268 C810 226 824 198 862 170"/>
+              <path class="cool-line" d="M990 724 C874 690 760 686 660 704 C552 722 438 712 320 680"/>
+              <rect class="permeable" x="520" y="732" width="156" height="38" rx="8"/>
+              <g>
+                <rect class="mitigation-tag" x="432" y="332" width="146" height="42"/>
+                <text class="label-text tiny-label" x="452" y="360">屋顶绿化</text>
+                <rect class="mitigation-tag" x="664" y="222" width="156" height="42"/>
+                <text class="label-text tiny-label" x="684" y="250">高反照率屋顶</text>
+                <rect class="mitigation-tag" x="864" y="160" width="188" height="42"/>
+                <text class="label-text tiny-label" x="884" y="188">通风廊道引冷风</text>
+                <rect class="mitigation-tag" x="470" y="780" width="186" height="38"/>
+                <text class="label-text tiny-label" x="490" y="806">透水铺装</text>
+                <rect class="mitigation-tag" x="916" y="734" width="170" height="42"/>
+                <text class="label-text tiny-label" x="936" y="762">扩大绿地水体</text>
+              </g>
+              <text class="metric-label" x="514" y="170">削弱热岛强度</text>
+            </g>
+
+            <g id="temperatureProfile">
+              <rect x="42" y="54" width="306" height="148" fill="rgba(255,255,255,.82)" stroke="rgba(45,61,74,.24)" stroke-width="2" rx="16"/>
+              <text class="label-text small-label" x="68" y="88">气温剖面</text>
+              <path d="M76 160 H312 M92 132 V172 M200 120 V172 M300 132 V172" stroke="#7c8792" stroke-width="2" opacity=".48"/>
+              <path d="M80 152 C134 150 162 118 202 112 C242 118 262 148 314 150" fill="none" stroke="#e5482f" stroke-width="6" stroke-linecap="round"/>
+              <circle cx="202" cy="112" r="8" fill="#e5482f"/>
+              <text class="label-text tiny-label" x="70" y="190">郊区</text>
+              <text class="label-text tiny-label" x="176" y="190">城区</text>
+              <text class="label-text tiny-label" x="278" y="190">郊区</text>
+            </g>
+          </svg>
+        </div>
+      </div>
+
+      <aside class="info-panel" aria-live="polite">
+        <div class="panel-topline">
+          <span id="stepBadge">步骤 1 / 7</span>
+          <span id="keywordBadge">下垫面性质</span>
+        </div>
+        <h2 id="stepTitle">下垫面</h2>
+        <p id="stepSummary">城市中心以沥青、混凝土和高密度建筑为主，吸热快、蓄热多；郊区绿地、水体和农田反照率与蒸散条件不同。</p>
+        <ul id="conceptList" class="concept-list"></ul>
+        <div class="data-board">
+          <div>
+            <span class="data-label">课堂观察</span>
+            <strong id="metricPrimary">硬化面比例高</strong>
+          </div>
+          <div>
+            <span class="data-label">地理联系</span>
+            <strong id="metricSecondary">反照率、热容量、蒸散作用</strong>
+          </div>
+        </div>
+        <p class="export-status" id="exportStatus" aria-live="polite"></p>
+      </aside>
+    </section>
+
+    <nav class="step-rail" aria-label="底部步骤建议">
+      <button type="button" data-step="0" class="active">下垫面</button>
+      <button type="button" data-step="1">升温</button>
+      <button type="button" data-step="2">热岛环流</button>
+      <button type="button" data-step="3">污染扩散</button>
+      <button type="button" data-step="4">绿地水体</button>
+      <button type="button" data-step="5">夜间差异</button>
+      <button type="button" data-step="6">治理</button>
+    </nav>
+  </main>
+
+  <script src="app.js" defer></script>
+</body>
+</html>

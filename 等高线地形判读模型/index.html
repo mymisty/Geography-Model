@@ -1,0 +1,333 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>等高线地形判读模型</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="app-shell" aria-label="高中地理等高线地形判读交互模型">
+      <section class="model-board">
+        <div class="topbar">
+          <div>
+            <p class="eyebrow">高中地理 · 地形图判读</p>
+            <h1>等高线地形判读模型</h1>
+          </div>
+          <div class="control-strip" aria-label="模型控制">
+            <button class="tool-btn primary" id="playPause" type="button" aria-label="播放">
+              <span class="icon" aria-hidden="true">▶</span>
+              <span id="playText">播放</span>
+            </button>
+            <button class="tool-btn" id="prevStep" type="button" aria-label="上一步">
+              <span class="icon" aria-hidden="true">‹</span>
+              <span>上一步</span>
+            </button>
+            <button class="tool-btn" id="nextStep" type="button" aria-label="下一步">
+              <span>下一步</span>
+              <span class="icon" aria-hidden="true">›</span>
+            </button>
+            <button class="tool-btn" id="resetModel" type="button" aria-label="重置">
+              <span class="icon" aria-hidden="true">↺</span>
+              <span>重置</span>
+            </button>
+            <button class="tool-btn" id="exportSvg" type="button" aria-label="导出矢量图">
+              <span class="icon" aria-hidden="true">⇩</span>
+              <span>导出矢量图</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="progress-row">
+          <label for="progressRange">判读进度</label>
+          <input id="progressRange" type="range" min="0" max="6" value="0" step="1" />
+          <output id="progressLabel" for="progressRange">读数</output>
+        </div>
+
+        <div class="content-grid">
+          <section class="map-wrap" aria-label="可点击等高线地形图">
+            <svg
+              id="contourMap"
+              class="contour-map"
+              viewBox="0 0 1080 720"
+              role="img"
+              aria-labelledby="mapTitle mapDesc"
+            >
+              <title id="mapTitle">等高线地形判读示意图</title>
+              <desc id="mapDesc">
+                一幅包含山顶、山脊、山谷、鞍部、陡崖、坡度陡缓和河流流向的高清 SVG 等高线地形图。
+              </desc>
+              <defs>
+                <linearGradient id="landGradient" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stop-color="#f8f1df" />
+                  <stop offset="48%" stop-color="#edf5df" />
+                  <stop offset="100%" stop-color="#d8ecf4" />
+                </linearGradient>
+                <radialGradient id="summitGlow" cx="50%" cy="50%" r="55%">
+                  <stop offset="0%" stop-color="#fff4bd" stop-opacity="0.95" />
+                  <stop offset="100%" stop-color="#fff4bd" stop-opacity="0" />
+                </radialGradient>
+                <filter id="softShadow" x="-15%" y="-15%" width="130%" height="130%">
+                  <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#334155" flood-opacity="0.14" />
+                </filter>
+                <marker
+                  id="riverArrow"
+                  viewBox="0 0 12 12"
+                  refX="10"
+                  refY="6"
+                  markerWidth="12"
+                  markerHeight="12"
+                  orient="auto"
+                >
+                  <path d="M1,1 L11,6 L1,11 Z" fill="#1d6fb8" />
+                </marker>
+                <marker
+                  id="ridgeArrow"
+                  viewBox="0 0 12 12"
+                  refX="10"
+                  refY="6"
+                  markerWidth="10"
+                  markerHeight="10"
+                  orient="auto"
+                >
+                  <path d="M1,1 L11,6 L1,11 Z" fill="#d97706" />
+                </marker>
+              </defs>
+
+              <rect x="24" y="24" width="1032" height="672" rx="22" fill="url(#landGradient)" filter="url(#softShadow)" />
+              <path
+                d="M54 606 C120 670 255 672 374 648 C486 626 590 650 713 640 C850 629 972 563 1017 454 C1046 381 1028 267 958 202 C859 109 725 92 583 83 C432 73 293 82 179 160 C72 233 42 352 55 462 C60 510 26 579 54 606Z"
+                fill="#f9f6e8"
+                opacity="0.55"
+              />
+
+              <g class="grid-layer" aria-hidden="true">
+                <path d="M120 80 V646" />
+                <path d="M240 80 V646" />
+                <path d="M360 80 V646" />
+                <path d="M480 80 V646" />
+                <path d="M600 80 V646" />
+                <path d="M720 80 V646" />
+                <path d="M840 80 V646" />
+                <path d="M960 80 V646" />
+                <path d="M70 150 H1010" />
+                <path d="M70 250 H1010" />
+                <path d="M70 350 H1010" />
+                <path d="M70 450 H1010" />
+                <path d="M70 550 H1010" />
+                <text x="86" y="114">北</text>
+                <path d="M91 134 L91 88" class="north-arrow" />
+                <path d="M91 88 L79 109 M91 88 L103 109" class="north-arrow" />
+              </g>
+
+              <g class="contours" aria-label="等高线">
+                <path
+                  class="contour contour-100"
+                  d="M120 550 C70 450 96 300 190 205 C270 125 410 88 540 110 C670 134 765 205 860 300 C940 380 958 505 880 586 C790 675 625 650 475 630 C320 610 180 642 120 550Z"
+                />
+                <path
+                  class="contour contour-150"
+                  d="M152 531 C108 447 125 329 208 242 C288 158 419 125 540 141 C653 155 742 216 824 305 C895 382 904 486 832 554 C764 619 623 619 496 601 C372 583 208 602 152 531Z"
+                />
+                <path
+                  class="contour contour-200"
+                  d="M180 510 C130 424 152 312 225 248 C302 181 414 157 525 166 C637 176 720 230 790 302 C860 373 865 468 798 535 C730 602 615 593 502 576 C380 558 236 584 180 510Z"
+                />
+                <path
+                  class="contour contour-250"
+                  d="M213 493 C172 421 188 335 250 278 C318 216 425 196 526 203 C616 210 689 253 748 320 C805 386 793 462 734 516 C676 568 579 555 482 544 C383 532 264 550 213 493Z"
+                />
+                <path
+                  class="contour contour-300"
+                  d="M240 474 C202 409 225 329 282 284 C350 231 441 219 525 232 C609 246 672 289 720 346 C767 405 750 480 692 520 C625 567 530 548 448 532 C366 514 278 537 240 474Z"
+                />
+                <path
+                  class="contour contour-350"
+                  d="M276 455 C248 401 267 345 316 308 C377 264 452 258 526 275 C592 290 642 329 672 378 C704 429 677 482 626 507 C565 537 491 515 425 501 C358 487 303 500 276 455Z"
+                />
+                <path
+                  class="contour contour-400"
+                  d="M310 436 C287 396 306 343 350 316 C406 283 475 286 535 306 C593 326 634 366 642 410 C650 460 606 495 546 499 C487 503 416 481 364 470 C337 463 323 456 310 436Z"
+                />
+                <path
+                  class="contour contour-500"
+                  d="M382 418 C369 391 386 360 418 347 C461 329 514 342 546 366 C578 391 583 429 552 449 C515 473 455 457 418 446 C399 440 390 432 382 418Z"
+                />
+                <path
+                  class="contour contour-600"
+                  d="M442 412 C435 396 444 380 464 374 C489 367 520 377 532 397 C544 416 529 431 506 434 C480 437 451 429 442 412Z"
+                />
+                <path
+                  class="contour contour-200"
+                  d="M560 235 C600 180 700 172 760 215 C820 258 832 345 778 388 C728 429 636 407 590 358 C550 318 527 274 560 235Z"
+                />
+                <path
+                  class="contour contour-300"
+                  d="M620 248 C655 216 715 220 750 255 C788 294 785 346 746 374 C707 402 648 390 620 352 C590 314 590 276 620 248Z"
+                />
+                <path
+                  class="contour contour-400"
+                  d="M668 273 C694 254 727 263 744 290 C763 320 748 351 717 360 C684 369 653 349 648 318 C644 299 651 285 668 273Z"
+                />
+                <path class="contour contour-150 valley-contour" d="M672 128 C737 170 805 217 850 283 C805 278 760 289 724 325 C695 354 681 399 697 449 C719 520 798 569 914 598" />
+                <path class="contour contour-200 valley-contour" d="M716 151 C780 193 831 240 866 302 C817 297 778 310 754 346 C729 382 737 432 772 485 C803 532 851 563 928 581" />
+                <path class="contour contour-250 valley-contour" d="M757 180 C809 217 852 260 884 322 C835 318 803 336 790 374 C775 418 803 465 842 505 C877 541 913 558 962 568" />
+                <path class="contour contour-300 valley-contour" d="M794 212 C835 244 870 286 898 344 C856 344 831 363 826 398 C820 439 852 477 893 505 C925 528 948 538 990 546" />
+              </g>
+
+              <g class="contour-labels" aria-label="高程标注">
+                <text x="146" y="238">100m</text>
+                <text x="213" y="282">200m</text>
+                <text x="277" y="331">300m</text>
+                <text x="333" y="356">400m</text>
+                <text x="421" y="350">500m</text>
+                <text x="474" y="391">600m</text>
+                <text x="617" y="244">300m</text>
+                <text x="697" y="285">400m</text>
+                <text x="855" y="305">200m</text>
+              </g>
+
+              <g class="terrain-feature feature-summit" data-feature="summit" aria-hidden="true">
+                <ellipse class="summit-glow feature-visual" cx="491" cy="405" rx="82" ry="60" fill="url(#summitGlow)" />
+                <path class="feature-visual summit-mark" d="M491 378 L508 415 L468 392 L514 392 L474 415 Z" />
+                <circle class="feature-visual pin-dot" cx="491" cy="405" r="7" />
+                <text class="map-label feature-visual" x="548" y="376">山顶</text>
+                <circle class="hotspot" cx="491" cy="405" r="86" />
+              </g>
+
+              <g class="terrain-feature feature-summit2" data-feature="summit" aria-hidden="true">
+                <circle class="feature-visual pin-dot muted" cx="705" cy="309" r="6" />
+                <text class="map-label small feature-visual" x="758" y="322">次峰</text>
+                <circle class="hotspot" cx="705" cy="309" r="64" />
+              </g>
+
+              <g class="terrain-feature feature-ridge" data-feature="ridge" aria-hidden="true">
+                <path
+                  class="feature-visual ridge-line"
+                  d="M486 404 C526 430 565 461 608 491 C640 513 672 528 718 535"
+                  marker-end="url(#ridgeArrow)"
+                />
+                <text class="map-label feature-visual" x="628" y="523">山脊</text>
+                <path class="hotspot wide-path ridge-hotspot" d="M486 404 C526 430 565 461 608 491 C640 513 672 528 718 535" />
+              </g>
+
+              <g class="terrain-feature feature-valley" data-feature="valley" aria-hidden="true">
+                <path class="feature-visual valley-line" d="M676 151 C705 207 735 260 769 328 C809 406 853 492 914 598" />
+                <text class="map-label feature-visual" x="785" y="372">山谷</text>
+                <path class="hotspot wide-path valley-hotspot" d="M676 151 C705 207 735 260 769 328 C809 406 853 492 914 598" />
+              </g>
+
+              <g class="terrain-feature feature-river" data-feature="river" aria-hidden="true">
+                <path
+                  class="feature-visual river-line"
+                  d="M659 142 C685 190 714 240 745 291 C785 356 812 423 858 498 C876 529 893 562 923 606"
+                  marker-end="url(#riverArrow)"
+                />
+                <path class="feature-visual river-line thin" d="M704 247 C690 261 680 279 674 301" />
+                <path class="feature-visual river-line thin" d="M790 383 C770 391 756 406 747 424" />
+                <text class="map-label river-label feature-visual" x="877" y="510">河流流向</text>
+                <path class="hotspot wide-path river-hotspot" d="M659 142 C685 190 714 240 745 291 C785 356 812 423 858 498 C876 529 893 562 923 606" />
+              </g>
+
+              <g class="terrain-feature feature-saddle" data-feature="saddle" aria-hidden="true">
+                <ellipse class="feature-visual saddle-ring" cx="587" cy="260" rx="58" ry="40" transform="rotate(-17 587 260)" />
+                <path class="feature-visual saddle-line" d="M532 279 C565 251 606 250 642 272" />
+                <text class="map-label feature-visual" x="552" y="229">鞍部</text>
+                <ellipse class="hotspot" cx="587" cy="260" rx="76" ry="56" transform="rotate(-17 587 260)" />
+              </g>
+
+              <g class="terrain-feature feature-cliff" data-feature="cliff" aria-hidden="true">
+                <path class="feature-visual cliff-edge" d="M166 398 C190 432 205 469 218 520 C228 560 252 586 287 602" />
+                <path class="feature-visual cliff-hatch" d="M152 419 L197 407 M160 449 L211 435 M169 480 L225 462 M181 511 L239 494 M199 544 L255 527 M222 574 L278 555" />
+                <path class="feature-visual close-contour" d="M138 407 C172 449 181 505 215 565 C230 590 260 606 302 613" />
+                <path class="feature-visual close-contour" d="M153 392 C187 437 200 496 234 558 C251 587 278 600 316 606" />
+                <text class="map-label danger feature-visual" x="116" y="386">陡崖</text>
+                <path class="hotspot wide-path cliff-hotspot" d="M166 398 C190 432 205 469 218 520 C228 560 252 586 287 602" />
+              </g>
+
+              <g class="terrain-feature feature-steep" data-feature="steep" aria-hidden="true">
+                <path class="feature-visual slope-bracket" d="M226 426 C247 458 257 492 273 535" />
+                <path class="feature-visual slope-tick" d="M214 428 L243 424 M229 462 L261 456 M241 498 L276 489 M255 534 L291 521" />
+                <text class="map-label feature-visual" x="278" y="466">坡陡</text>
+                <ellipse class="hotspot" cx="252" cy="482" rx="78" ry="92" />
+              </g>
+
+              <g class="terrain-feature feature-gentle" data-feature="gentle" aria-hidden="true">
+                <path class="feature-visual gentle-zone" d="M669 574 C737 596 821 591 903 555" />
+                <path class="feature-visual gentle-zone second" d="M658 619 C746 644 852 631 952 585" />
+                <text class="map-label feature-visual" x="721" y="616">坡缓</text>
+                <ellipse class="hotspot" cx="794" cy="597" rx="160" ry="82" />
+              </g>
+
+              <g class="legend-box" aria-label="图例">
+                <rect x="760" y="72" width="252" height="112" rx="14" />
+                <path d="M782 103 C808 87 838 89 860 106" class="legend-contour" />
+                <text x="878" y="108">等高线：同线等高</text>
+                <path d="M782 136 C812 137 837 121 861 126" class="legend-river" marker-end="url(#riverArrow)" />
+                <text x="878" y="141">河流：由高流向低</text>
+                <path d="M782 166 L862 166" class="legend-ridge" />
+                <text x="878" y="171">虚线：判读辅助线</text>
+              </g>
+
+              <g class="target-layer" aria-label="地图可点击热点">
+                <g class="feature-target" data-feature="summit" tabindex="0" role="button" aria-label="山顶">
+                  <circle class="target-hit" cx="491" cy="405" r="62" />
+                </g>
+                <g class="feature-target" data-feature="ridge" tabindex="0" role="button" aria-label="山脊">
+                  <rect class="target-hit" x="598" y="493" width="112" height="52" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="valley" tabindex="0" role="button" aria-label="山谷">
+                  <rect class="target-hit" x="748" y="340" width="112" height="56" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="river" tabindex="0" role="button" aria-label="河流流向">
+                  <rect class="target-hit" x="856" y="482" width="134" height="58" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="saddle" tabindex="0" role="button" aria-label="鞍部">
+                  <rect class="target-hit" x="532" y="214" width="112" height="64" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="cliff" tabindex="0" role="button" aria-label="陡崖">
+                  <rect class="target-hit" x="104" y="356" width="126" height="70" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="steep" tabindex="0" role="button" aria-label="坡度陡">
+                  <rect class="target-hit" x="254" y="438" width="118" height="62" rx="12" />
+                </g>
+                <g class="feature-target" data-feature="gentle" tabindex="0" role="button" aria-label="坡度缓">
+                  <rect class="target-hit" x="696" y="586" width="136" height="58" rx="12" />
+                </g>
+              </g>
+            </svg>
+          </section>
+
+          <aside class="info-panel" aria-live="polite">
+            <div class="panel-kicker" id="panelKicker">第 1 步 / 7</div>
+            <h2 id="panelTitle">读数：先找等高距</h2>
+            <p id="panelLead"></p>
+            <ul id="panelPoints"></ul>
+            <div class="feature-card" id="featureCard" hidden>
+              <p class="feature-type" id="featureType"></p>
+              <h3 id="featureTitle"></h3>
+              <p id="featureText"></p>
+              <p class="feature-rule" id="featureRule"></p>
+            </div>
+            <div class="classroom-tip">
+              <span>课堂提示</span>
+              <p id="classroomTip"></p>
+            </div>
+          </aside>
+        </div>
+
+        <nav class="step-rail" aria-label="判读步骤">
+          <button type="button" class="step-chip is-active" data-step="0">读数</button>
+          <button type="button" class="step-chip" data-step="1">山顶</button>
+          <button type="button" class="step-chip" data-step="2">山脊山谷</button>
+          <button type="button" class="step-chip" data-step="3">鞍部</button>
+          <button type="button" class="step-chip" data-step="4">陡崖</button>
+          <button type="button" class="step-chip" data-step="5">坡度</button>
+          <button type="button" class="step-chip" data-step="6">综合判读</button>
+        </nav>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>

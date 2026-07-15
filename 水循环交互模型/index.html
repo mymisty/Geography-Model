@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>高中地理水循环模型</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="app-shell" aria-label="高中地理水循环交互模型">
+    <section class="model-stage" aria-labelledby="modelTitle">
+      <header class="toolbar">
+        <div class="title-lockup">
+          <p class="eyebrow">高中地理 · 过程模型</p>
+          <h1 id="modelTitle">水循环模型</h1>
+          <p id="stageLabel" class="stage-label">太阳辐射驱动水分进入大气</p>
+        </div>
+
+        <div class="controls" aria-label="模型控制">
+          <button id="playPauseBtn" class="control-button primary" type="button" aria-label="播放模型" title="播放模型">
+            <span id="playPauseIcon" class="button-icon icon-play" aria-hidden="true"></span>
+            <span id="playPauseText">播放</span>
+          </button>
+
+          <label class="progress-control">
+            <span class="sr-only">循环进度</span>
+            <input id="progressRange" type="range" min="0" max="100" step="1" value="0" aria-label="循环进度">
+            <output id="progressValue" for="progressRange">0%</output>
+          </label>
+
+          <button id="resetBtn" class="control-button" type="button" aria-label="重置模型" title="重置模型">
+            <span class="button-icon icon-reset" aria-hidden="true"></span>
+            <span>重置</span>
+          </button>
+
+          <button id="exportBtn" class="control-button" type="button" aria-label="导出当前矢量图" title="导出当前矢量图">
+            <span class="button-icon icon-export" aria-hidden="true"></span>
+            <span>导出矢量图</span>
+          </button>
+        </div>
+      </header>
+
+      <div class="visual-area">
+        <svg id="waterCycleSvg" class="cycle-svg reservoir-on city-on vegetation-on" viewBox="0 0 1200 720" role="img" aria-labelledby="svgTitle svgDesc">
+          <title id="svgTitle">高中地理水循环模型</title>
+          <desc id="svgDesc">包含蒸发、水汽输送、降水、地表径流、入渗、地下径流以及水库、城市硬化和植被影响的交互式水循环矢量图模型。</desc>
+
+          <defs>
+            <linearGradient id="skyGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#dff4ff"></stop>
+              <stop offset="58%" stop-color="#f8fcff"></stop>
+              <stop offset="100%" stop-color="#eef8ef"></stop>
+            </linearGradient>
+            <linearGradient id="oceanGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#56b8d4"></stop>
+              <stop offset="100%" stop-color="#147aa5"></stop>
+            </linearGradient>
+            <linearGradient id="riverGradient" x1="0" x2="1" y1="0" y2="0">
+              <stop offset="0%" stop-color="#63c5df"></stop>
+              <stop offset="100%" stop-color="#1f8ab9"></stop>
+            </linearGradient>
+            <linearGradient id="landGradient" x1="0" x2="1" y1="0" y2="1">
+              <stop offset="0%" stop-color="#92c66a"></stop>
+              <stop offset="52%" stop-color="#d0b66f"></stop>
+              <stop offset="100%" stop-color="#8f7047"></stop>
+            </linearGradient>
+            <linearGradient id="soilGradient" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stop-color="#c19662"></stop>
+              <stop offset="100%" stop-color="#71543c"></stop>
+            </linearGradient>
+            <pattern id="cityPattern" width="22" height="22" patternUnits="userSpaceOnUse">
+              <rect width="22" height="22" fill="#cfd6dc"></rect>
+              <path d="M0 11H22M11 0V22" stroke="#9ca8b2" stroke-width="2"></path>
+            </pattern>
+            <filter id="softShadow" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#284252" flood-opacity="0.18"></feDropShadow>
+            </filter>
+            <filter id="sunGlow" x="-40%" y="-40%" width="180%" height="180%">
+              <feGaussianBlur stdDeviation="10" result="blur"></feGaussianBlur>
+              <feMerge>
+                <feMergeNode in="blur"></feMergeNode>
+                <feMergeNode in="SourceGraphic"></feMergeNode>
+              </feMerge>
+            </filter>
+            <marker id="arrowBlue" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M2 2L10 6L2 10Z" fill="#1d7db2"></path>
+            </marker>
+            <marker id="arrowWhite" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M2 2L10 6L2 10Z" fill="#ffffff"></path>
+            </marker>
+            <marker id="arrowBrown" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M2 2L10 6L2 10Z" fill="#87613e"></path>
+            </marker>
+            <marker id="arrowGreen" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M2 2L10 6L2 10Z" fill="#368a57"></path>
+            </marker>
+            <marker id="arrowGray" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+              <path d="M2 2L10 6L2 10Z" fill="#66717d"></path>
+            </marker>
+          </defs>
+
+          <rect class="sky" width="1200" height="720" fill="url(#skyGradient)"></rect>
+
+          <g id="landscapeLayer">
+            <g class="sun" filter="url(#sunGlow)">
+              <circle cx="1015" cy="96" r="54" fill="#f7be3b"></circle>
+              <circle cx="1015" cy="96" r="74" fill="none" stroke="#f7d46b" stroke-width="5" stroke-dasharray="10 16"></circle>
+            </g>
+            <text class="map-label sun-label" x="930" y="178">太阳辐射</text>
+
+            <g class="cloud cloud-left" filter="url(#softShadow)">
+              <ellipse cx="282" cy="154" rx="80" ry="36"></ellipse>
+              <ellipse cx="340" cy="146" rx="74" ry="46"></ellipse>
+              <ellipse cx="410" cy="163" rx="92" ry="38"></ellipse>
+              <rect x="250" y="154" width="218" height="44" rx="22"></rect>
+            </g>
+            <g class="cloud cloud-right" filter="url(#softShadow)">
+              <ellipse cx="708" cy="132" rx="86" ry="38"></ellipse>
+              <ellipse cx="780" cy="122" rx="78" ry="50"></ellipse>
+              <ellipse cx="858" cy="144" rx="96" ry="42"></ellipse>
+              <rect x="676" y="136" width="242" height="48" rx="24"></rect>
+            </g>
+
+            <path class="mountain back" d="M462 500L612 238L760 500Z"></path>
+            <path class="mountain front" d="M612 508L806 206L1018 508Z"></path>
+            <path class="snow" d="M806 206L743 304L782 292L806 344L840 290L878 305Z"></path>
+            <path class="snow" d="M612 238L570 310L602 302L620 345L650 300L680 312Z"></path>
+
+            <path class="land" d="M0 506C138 470 238 476 355 493C492 512 548 512 646 473C746 433 854 432 962 458C1066 482 1130 496 1200 474V720H0Z" fill="url(#landGradient)"></path>
+            <path class="soil" d="M0 612C142 604 282 626 410 607C520 590 628 605 736 626C888 656 1042 626 1200 610V720H0Z" fill="url(#soilGradient)"></path>
+            <path class="aquifer" d="M103 650C280 631 412 672 572 645C710 622 850 657 1044 633C1104 626 1160 629 1200 637V720H0V668C36 662 70 654 103 650Z"></path>
+
+            <rect class="ocean" x="0" y="532" width="1200" height="188" fill="url(#oceanGradient)"></rect>
+            <path class="coastline" d="M0 526C136 503 260 512 363 526C478 543 560 537 644 506C726 476 834 478 936 501C1042 526 1114 527 1200 502"></path>
+            <path class="river-channel" d="M829 338C800 405 758 432 706 462C650 494 638 522 657 548C682 582 746 589 820 574C922 554 1022 548 1200 562"></path>
+            <path class="river-water" d="M831 340C806 405 764 437 714 466C668 492 649 518 665 543C689 578 750 579 820 564C932 540 1032 538 1200 552"></path>
+
+            <g class="reservoir-shape">
+              <path d="M642 528C690 502 756 498 820 520C804 568 712 594 648 563C629 554 626 541 642 528Z" fill="#2e9ec2" opacity="0.88"></path>
+              <path d="M808 508L824 583" stroke="#646b73" stroke-width="15" stroke-linecap="round"></path>
+              <path d="M790 520L836 510M795 548L842 540M800 576L845 566" stroke="#dde3e8" stroke-width="5" stroke-linecap="round"></path>
+            </g>
+
+            <g class="city-base" transform="translate(930 420)">
+              <path d="M-24 92H176V30C122 22 54 26 -24 44Z" fill="url(#cityPattern)" stroke="#8c99a4" stroke-width="2"></path>
+              <rect x="4" y="12" width="34" height="74" rx="4" fill="#8795a1"></rect>
+              <rect x="50" y="-8" width="44" height="94" rx="4" fill="#687684"></rect>
+              <rect x="106" y="18" width="36" height="68" rx="4" fill="#9ba7b0"></rect>
+              <path d="M-30 94H184" stroke="#5d6670" stroke-width="8" stroke-linecap="round"></path>
+              <g class="city-windows">
+                <path d="M14 26H28M14 42H28M14 58H28M62 10H82M62 28H82M62 46H82M116 34H132M116 50H132" stroke="#f4d477" stroke-width="4" stroke-linecap="round"></path>
+              </g>
+            </g>
+
+            <g class="forest-base" transform="translate(234 438)">
+              <path d="M-56 100C-14 64 48 58 106 72C140 80 165 94 198 91V128H-56Z" fill="#598a4d" opacity="0.78"></path>
+              <g class="tree" transform="translate(0 4)">
+                <path d="M0 82V122" stroke="#6c4d32" stroke-width="9" stroke-linecap="round"></path>
+                <circle cx="0" cy="58" r="34" fill="#3c8d54"></circle>
+                <circle cx="-22" cy="72" r="24" fill="#4ea15f"></circle>
+                <circle cx="26" cy="74" r="26" fill="#2f7849"></circle>
+              </g>
+              <g class="tree" transform="translate(76 -10) scale(1.12)">
+                <path d="M0 82V122" stroke="#6c4d32" stroke-width="9" stroke-linecap="round"></path>
+                <circle cx="0" cy="58" r="34" fill="#3c8d54"></circle>
+                <circle cx="-22" cy="72" r="24" fill="#4ea15f"></circle>
+                <circle cx="26" cy="74" r="26" fill="#2f7849"></circle>
+              </g>
+              <g class="tree" transform="translate(148 6) scale(0.92)">
+                <path d="M0 82V122" stroke="#6c4d32" stroke-width="9" stroke-linecap="round"></path>
+                <circle cx="0" cy="58" r="34" fill="#3c8d54"></circle>
+                <circle cx="-22" cy="72" r="24" fill="#4ea15f"></circle>
+                <circle cx="26" cy="74" r="26" fill="#2f7849"></circle>
+              </g>
+            </g>
+
+            <text class="map-label ocean-label" x="72" y="608">海洋水体</text>
+            <text class="map-label reservoir-label" x="642" y="618">水库</text>
+            <text class="map-label city-label" x="936" y="404">城市硬化地表</text>
+            <text class="map-label forest-label" x="230" y="414">植被覆盖区</text>
+          </g>
+
+          <g id="evaporationLayer" class="cycle-layer" data-step="0">
+            <path class="flow-path evap-flow animated-path" d="M170 546C170 482 192 420 232 366C270 315 288 272 284 214" marker-end="url(#arrowBlue)"></path>
+            <path class="flow-path evap-flow animated-path delay-1" d="M344 544C330 486 340 424 372 368C404 312 408 260 382 212" marker-end="url(#arrowBlue)"></path>
+            <path class="flow-path transpiration-flow animated-path delay-2" d="M305 448C302 392 330 342 372 300C414 258 426 224 410 196" marker-end="url(#arrowGreen)"></path>
+            <g class="vapor-particles">
+              <circle cx="170" cy="520" r="8"></circle>
+              <circle cx="210" cy="435" r="6"></circle>
+              <circle cx="292" cy="408" r="7"></circle>
+              <circle cx="360" cy="332" r="6"></circle>
+              <circle cx="332" cy="462" r="7"></circle>
+            </g>
+            <g class="callout" transform="translate(86 318)">
+              <rect width="164" height="56" rx="8"></rect>
+              <text x="18" y="24">蒸发</text>
+              <text class="small" x="18" y="44">海洋与湖泊供水汽</text>
+            </g>
+            <g class="callout green" transform="translate(366 292)">
+              <rect width="178" height="56" rx="8"></rect>
+              <text x="18" y="24">植被蒸腾</text>
+              <text class="small" x="18" y="44">陆地水分进入大气</text>
+            </g>
+          </g>
+
+          <g id="transportLayer" class="cycle-layer" data-step="1">
+            <path class="flow-path transport-flow animated-path" d="M436 168C558 105 710 96 870 142C953 166 1010 196 1066 242" marker-end="url(#arrowWhite)"></path>
+            <path class="wind-line delay-1" d="M502 214C616 174 726 176 838 214"></path>
+            <path class="wind-line delay-2" d="M520 246C628 218 738 222 850 258"></path>
+            <g class="callout white" transform="translate(548 86)">
+              <rect width="198" height="58" rx="8"></rect>
+              <text x="18" y="25">水汽输送</text>
+              <text class="small" x="18" y="46">受风带与季风影响</text>
+            </g>
+          </g>
+
+          <g id="precipitationLayer" class="cycle-layer" data-step="2">
+            <g class="rain-column">
+              <path class="raindrop" d="M730 206C718 232 712 252 712 270C712 287 724 300 740 300C756 300 768 287 768 270C768 252 756 232 744 206C740 199 734 199 730 206Z"></path>
+              <path class="raindrop delay-1" d="M800 200C788 226 782 246 782 264C782 281 794 294 810 294C826 294 838 281 838 264C838 246 826 226 814 200C810 193 804 193 800 200Z"></path>
+              <path class="raindrop delay-2" d="M872 216C860 242 854 262 854 280C854 297 866 310 882 310C898 310 910 297 910 280C910 262 898 242 886 216C882 209 876 209 872 216Z"></path>
+              <path class="rain-streak" d="M700 232L672 338M766 230L736 360M836 230L802 354M908 242L878 360"></path>
+            </g>
+            <g class="callout" transform="translate(864 278)">
+              <rect width="164" height="56" rx="8"></rect>
+              <text x="18" y="24">降水</text>
+              <text class="small" x="18" y="44">雨、雪、冰雹等形式</text>
+            </g>
+          </g>
+
+          <g id="runoffLayer" class="cycle-layer" data-step="3">
+            <path class="flow-path runoff-flow animated-path" d="M818 330C790 390 748 425 690 462C634 498 620 534 648 566C690 612 820 582 942 562C1032 548 1108 548 1190 558" marker-end="url(#arrowBlue)"></path>
+            <path class="flow-path runoff-flow side animated-path delay-1" d="M560 408C594 430 626 454 658 486" marker-end="url(#arrowBlue)"></path>
+            <path class="flow-path urban-runoff animated-path delay-2" d="M962 514C904 532 858 548 812 566" marker-end="url(#arrowGray)"></path>
+            <g class="callout" transform="translate(728 438)">
+              <rect width="188" height="58" rx="8"></rect>
+              <text x="18" y="25">地表径流</text>
+              <text class="small" x="18" y="46">沿地势汇入河湖海</text>
+            </g>
+          </g>
+
+          <g id="infiltrationLayer" class="cycle-layer" data-step="4">
+            <path class="flow-path infiltration-flow animated-path" d="M438 524C438 566 424 592 388 626" marker-end="url(#arrowBrown)"></path>
+            <path class="flow-path infiltration-flow animated-path delay-1" d="M580 522C574 570 548 604 500 640" marker-end="url(#arrowBrown)"></path>
+            <path class="flow-path infiltration-flow green animated-path delay-2" d="M292 528C300 574 330 606 380 632" marker-end="url(#arrowGreen)"></path>
+            <path class="flow-path groundwater-flow animated-path" d="M336 660C462 690 586 686 708 656C810 632 918 632 1050 652" marker-end="url(#arrowBlue)"></path>
+            <path class="root-line" d="M302 552C278 588 286 610 264 638M320 552C322 590 344 606 336 644M360 552C388 586 384 612 414 642"></path>
+            <g class="callout brown" transform="translate(386 572)">
+              <rect width="188" height="58" rx="8"></rect>
+              <text x="18" y="25">入渗</text>
+              <text class="small" x="18" y="46">补给土壤水与地下水</text>
+            </g>
+            <g class="callout deep" transform="translate(714 642)">
+              <rect width="188" height="50" rx="8"></rect>
+              <text x="18" y="30">地下径流</text>
+            </g>
+          </g>
+
+          <g id="humanLayer" class="cycle-layer" data-step="5">
+            <g class="impact-reservoir">
+              <path class="impact-ring" d="M610 510C672 464 778 468 848 524C806 610 664 628 598 560C578 540 582 526 610 510Z"></path>
+              <path class="flow-path regulation-flow animated-path" d="M824 548C892 546 960 546 1030 552" marker-end="url(#arrowBlue)"></path>
+              <g class="callout" transform="translate(588 454)">
+                <rect width="186" height="58" rx="8"></rect>
+                <text x="18" y="25">水库调蓄</text>
+                <text class="small" x="18" y="46">削峰、蓄水、供水</text>
+              </g>
+            </g>
+            <g class="impact-city">
+              <path class="impact-ring hardening" d="M902 412H1128V530H902Z"></path>
+              <path class="flow-path city-fast-runoff animated-path delay-1" d="M982 492C930 512 888 536 840 564" marker-end="url(#arrowGray)"></path>
+              <path class="blocked-infiltration" d="M1010 534L992 584M1028 534L1010 584M992 544L1028 574"></path>
+              <g class="callout gray" transform="translate(920 316)">
+                <rect width="224" height="70" rx="8"></rect>
+                <text x="18" y="25">城市硬化</text>
+                <text class="small" x="18" y="47">入渗减少，径流加快</text>
+              </g>
+            </g>
+            <g class="impact-vegetation">
+              <path class="impact-ring vegetation" d="M166 420C232 380 352 380 426 432C396 520 238 538 168 482C146 464 146 438 166 420Z"></path>
+              <path class="flow-path canopy-flow animated-path delay-2" d="M250 430C254 464 270 492 306 522" marker-end="url(#arrowGreen)"></path>
+              <path class="flow-path canopy-flow animated-path" d="M342 426C338 466 356 502 390 532" marker-end="url(#arrowGreen)"></path>
+              <g class="callout green" transform="translate(138 354)">
+                <rect width="218" height="58" rx="8"></rect>
+                <text x="18" y="25">植被作用</text>
+                <text class="small" x="18" y="46">截留降水，增加入渗</text>
+              </g>
+            </g>
+          </g>
+
+          <g id="summaryLayer" class="cycle-layer" data-step="6">
+            <path class="summary-loop animated-path" d="M184 540C104 394 174 206 338 146C492 90 662 102 828 146C1032 200 1116 382 1026 522C944 648 728 682 550 656C398 634 266 628 184 540Z" marker-end="url(#arrowBlue)"></path>
+            <g class="summary-node" transform="translate(476 230)">
+              <rect width="306" height="92" rx="8"></rect>
+              <text x="24" y="35">循环总结</text>
+              <text class="small" x="24" y="61">大气水、地表水、地下水持续转化</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <nav class="step-strip" aria-label="水循环步骤建议">
+        <button class="step-button is-active" type="button" data-step="0">
+          <span class="step-index">01</span>
+          <span class="step-name">蒸发</span>
+          <span class="step-advice">找水汽来源</span>
+        </button>
+        <button class="step-button" type="button" data-step="1">
+          <span class="step-index">02</span>
+          <span class="step-name">输送</span>
+          <span class="step-advice">看风向路径</span>
+        </button>
+        <button class="step-button" type="button" data-step="2">
+          <span class="step-index">03</span>
+          <span class="step-name">降水</span>
+          <span class="step-advice">判读发生区</span>
+        </button>
+        <button class="step-button" type="button" data-step="3">
+          <span class="step-index">04</span>
+          <span class="step-name">径流</span>
+          <span class="step-advice">顺地势追踪</span>
+        </button>
+        <button class="step-button" type="button" data-step="4">
+          <span class="step-index">05</span>
+          <span class="step-name">入渗</span>
+          <span class="step-advice">连到地下水</span>
+        </button>
+        <button class="step-button" type="button" data-step="5">
+          <span class="step-index">06</span>
+          <span class="step-name">人类影响</span>
+          <span class="step-advice">比较增减效应</span>
+        </button>
+        <button class="step-button" type="button" data-step="6">
+          <span class="step-index">07</span>
+          <span class="step-name">循环总结</span>
+          <span class="step-advice">串联各环节</span>
+        </button>
+      </nav>
+    </section>
+
+    <aside class="info-panel" aria-live="polite" aria-labelledby="infoTitle">
+      <div class="panel-heading">
+        <span id="stepBadge" class="step-badge">01 / 07</span>
+        <h2 id="infoTitle">蒸发与蒸腾</h2>
+      </div>
+      <p id="infoLead" class="info-lead">太阳辐射提供能量，海洋、湖泊、土壤与植被把液态水转化为水汽，是水循环进入大气环节的起点。</p>
+      <ul id="infoPoints" class="info-points">
+        <li>能量来源：太阳辐射。</li>
+        <li>水汽来源：海洋蒸发与陆地蒸散。</li>
+        <li>课堂追问：为什么海洋是大气水汽的主要来源？</li>
+      </ul>
+
+      <section class="mini-panel" aria-labelledby="factorTitle">
+        <h3 id="factorTitle">人类活动因子</h3>
+        <label class="impact-toggle">
+          <input id="reservoirToggle" type="checkbox" checked>
+          <span class="toggle-mark"></span>
+          <span>水库调蓄</span>
+        </label>
+        <label class="impact-toggle">
+          <input id="cityToggle" type="checkbox" checked>
+          <span class="toggle-mark"></span>
+          <span>城市硬化</span>
+        </label>
+        <label class="impact-toggle">
+          <input id="vegetationToggle" type="checkbox" checked>
+          <span class="toggle-mark"></span>
+          <span>植被覆盖</span>
+        </label>
+      </section>
+
+      <section class="mini-panel emphasis" aria-labelledby="questionTitle">
+        <h3 id="questionTitle">课堂提示</h3>
+        <p id="classPrompt">从海洋表面和植被冠层各找一条上升箭头，比较二者都需要的共同条件。</p>
+      </section>
+    </aside>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

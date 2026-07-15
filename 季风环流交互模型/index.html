@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>高中地理：季风环流模型</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <main class="app-shell">
+    <section class="model-card" aria-label="季风环流交互模型">
+      <header class="topbar">
+        <div>
+          <p class="kicker">高中地理 · 大气环流</p>
+          <h1>季风环流模型</h1>
+        </div>
+        <div class="season-badge" id="seasonBadge">海陆热力差异</div>
+      </header>
+
+      <div class="workspace">
+        <section class="stage-wrap" aria-label="季风环流矢量图模型">
+          <svg id="monsoonSvg" viewBox="0 0 1200 760" role="img" aria-labelledby="svgTitle svgDesc">
+            <title id="svgTitle">季风环流模型示意图</title>
+            <desc id="svgDesc">通过海陆热力差异、气压差异、风向箭头、水汽输送和降水区展示夏季风与冬季风。</desc>
+            <defs>
+              <linearGradient id="skyGrad" x1="0" x2="0" y1="0" y2="1">
+                <stop offset="0%" stop-color="#dff4ff" />
+                <stop offset="58%" stop-color="#eef9ff" />
+                <stop offset="100%" stop-color="#ffffff" />
+              </linearGradient>
+              <linearGradient id="oceanGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#3b89c9" />
+                <stop offset="100%" stop-color="#78c3df" />
+              </linearGradient>
+              <linearGradient id="landGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#f0c46d" />
+                <stop offset="58%" stop-color="#d89a56" />
+                <stop offset="100%" stop-color="#b8794c" />
+              </linearGradient>
+              <linearGradient id="plateauGrad" x1="0" x2="1" y1="0" y2="1">
+                <stop offset="0%" stop-color="#c8a56d" />
+                <stop offset="100%" stop-color="#8d6a45" />
+              </linearGradient>
+              <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+                <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#264653" flood-opacity="0.18" />
+              </filter>
+              <filter id="glowBlue" x="-40%" y="-40%" width="180%" height="180%">
+                <feGaussianBlur stdDeviation="5" result="blur" />
+                <feMerge>
+                  <feMergeNode in="blur" />
+                  <feMergeNode in="SourceGraphic" />
+                </feMerge>
+              </filter>
+              <marker id="arrowBlue" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#0b77bd" />
+              </marker>
+              <marker id="arrowOrange" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#c45d25" />
+              </marker>
+              <marker id="arrowGray" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+                <path d="M 0 0 L 10 5 L 0 10 z" fill="#59636e" />
+              </marker>
+              <path id="summerWindPath" d="M 182 540 C 330 500, 430 452, 548 398 C 664 344, 780 306, 956 260" />
+              <path id="winterWindPath" d="M 994 242 C 848 296, 720 356, 606 420 C 494 482, 368 522, 202 568" />
+            </defs>
+
+            <rect width="1200" height="760" rx="36" fill="url(#skyGrad)" />
+            <g class="grid-lines" opacity="0.32">
+              <path d="M120 120H1080M120 220H1080M120 320H1080M120 420H1080M120 520H1080M120 620H1080" />
+              <path d="M180 92V655M340 92V655M500 92V655M660 92V655M820 92V655M980 92V655" />
+            </g>
+
+            <g id="sunGroup" transform="translate(180 122)">
+              <circle id="sunCore" r="46" fill="#ffc857" />
+              <g class="sun-rays" stroke="#ffc857" stroke-width="8" stroke-linecap="round">
+                <path d="M0 -78V-108" />
+                <path d="M0 78V108" />
+                <path d="M78 0H108" />
+                <path d="M-78 0H-108" />
+                <path d="M55 -55L76 -76" />
+                <path d="M-55 -55L-76 -76" />
+                <path d="M55 55L76 76" />
+                <path d="M-55 55L-76 76" />
+              </g>
+            </g>
+
+            <g class="map-base" filter="url(#softShadow)">
+              <path id="oceanShape" d="M80 252 C176 220, 278 240, 366 274 C452 307, 512 368, 584 414 C646 454, 676 520, 642 650 L80 650 Z" fill="url(#oceanGrad)" />
+              <path id="landShape" d="M548 194 C650 142, 790 110, 944 156 C1060 190, 1134 276, 1138 394 C1144 542, 1040 632, 860 654 C748 668, 642 630, 584 570 C536 520, 512 440, 536 358 C548 316, 518 238, 548 194 Z" fill="url(#landGrad)" />
+              <path id="coastLine" d="M558 210 C626 270, 598 350, 630 414 C666 488, 736 518, 732 620" fill="none" stroke="#ffffff" stroke-width="9" stroke-linecap="round" opacity="0.92" />
+              <path id="plateauShape" d="M790 198 C878 170, 1014 198, 1072 278 C1018 320, 924 312, 854 284 C810 266, 780 238, 790 198 Z" fill="url(#plateauGrad)" opacity="0.75" />
+              <path d="M804 230 L854 196 L914 248 L964 206 L1044 276" fill="none" stroke="#f7ead4" stroke-width="9" stroke-linecap="round" stroke-linejoin="round" opacity="0.9" />
+            </g>
+
+            <g class="labels">
+              <text x="226" y="620">海洋</text>
+              <text x="788" y="622">大陆</text>
+              <text x="894" y="244" class="small-label">青藏高原</text>
+              <text x="612" y="442" class="small-label">沿海季风区</text>
+            </g>
+
+            <g id="thermalGroup">
+              <g id="seaThermal" class="thermal-card" transform="translate(148 332)">
+                <rect width="246" height="112" rx="26" />
+                <text class="thermal-title" x="28" y="42">海洋升温慢</text>
+                <text id="seaTempLabel" class="thermal-value" x="28" y="82">相对较冷</text>
+              </g>
+              <g id="landThermal" class="thermal-card land" transform="translate(832 416)">
+                <rect width="246" height="112" rx="26" />
+                <text class="thermal-title" x="28" y="42">大陆升温快</text>
+                <text id="landTempLabel" class="thermal-value" x="28" y="82">相对较热</text>
+              </g>
+            </g>
+
+            <g id="pressureGroup">
+              <g id="seaPressure" class="pressure-node" transform="translate(294 254)">
+                <circle r="58" />
+                <text id="seaPressureMain" y="-6">高压</text>
+                <text id="seaPressureSub" y="28">冷而下沉</text>
+              </g>
+              <g id="landPressure" class="pressure-node land" transform="translate(854 330)">
+                <circle r="58" />
+                <text id="landPressureMain" y="-6">低压</text>
+                <text id="landPressureSub" y="28">热而上升</text>
+              </g>
+            </g>
+
+            <g id="verticalMotion" class="motion-group">
+              <path id="landUpArrow" d="M1000 430 C1024 386, 1038 340, 1028 294" fill="none" marker-end="url(#arrowBlue)" />
+              <path id="seaDownArrow" d="M218 176 C228 220, 230 250, 226 292" fill="none" marker-end="url(#arrowGray)" />
+              <text x="942" y="382">受热上升</text>
+              <text x="142" y="248">冷却下沉</text>
+            </g>
+
+            <g id="summerWinds" class="wind-layer">
+              <use href="#summerWindPath" class="wind-arrow summer main" />
+              <path d="M232 474 C370 430, 486 384, 650 316 C770 266, 880 228, 1044 216" class="wind-arrow summer secondary" />
+              <path d="M160 594 C310 548, 466 508, 634 446 C776 394, 908 352, 1084 316" class="wind-arrow summer secondary" />
+              <text x="424" y="356" class="wind-label summer-label">夏季风：由海洋吹向大陆</text>
+            </g>
+
+            <g id="winterWinds" class="wind-layer">
+              <use href="#winterWindPath" class="wind-arrow winter main" />
+              <path d="M1034 346 C904 392, 774 428, 636 476 C510 520, 398 558, 252 610" class="wind-arrow winter secondary" />
+              <path d="M896 194 C770 236, 654 292, 546 352 C438 414, 340 454, 206 492" class="wind-arrow winter secondary" />
+              <text x="620" y="506" class="wind-label winter-label">冬季风：由大陆吹向海洋</text>
+            </g>
+
+            <g id="moistureLayer">
+              <circle class="moisture-dot" cx="220" cy="530" r="7" />
+              <circle class="moisture-dot" cx="316" cy="498" r="6" />
+              <circle class="moisture-dot" cx="426" cy="452" r="8" />
+              <circle class="moisture-dot" cx="542" cy="400" r="6" />
+              <circle class="moisture-dot" cx="662" cy="348" r="8" />
+              <circle class="moisture-dot" cx="786" cy="300" r="6" />
+              <text x="272" y="468" class="moisture-label">水汽输送</text>
+            </g>
+
+            <g id="rainLayer">
+              <path class="cloud" d="M720 206 C724 174, 760 156, 790 174 C810 142, 864 142, 888 178 C928 172, 960 196, 962 232 C964 266, 936 286, 898 286 L742 286 C706 286, 682 264, 682 236 C682 214, 696 200, 720 206 Z" />
+              <g class="rain-lines">
+                <path d="M724 318 L706 366" />
+                <path d="M772 318 L754 374" />
+                <path d="M820 318 L802 374" />
+                <path d="M868 318 L850 368" />
+                <path d="M916 318 L898 362" />
+              </g>
+              <ellipse class="rain-zone" cx="805" cy="440" rx="162" ry="56" />
+              <text x="700" y="454" class="rain-label">降水集中区</text>
+            </g>
+
+            <g id="winterDryLayer">
+              <path d="M858 250 C842 276, 842 316, 868 344 C888 366, 890 400, 868 428" fill="none" stroke="#c45d25" stroke-width="8" stroke-linecap="round" opacity="0.82" />
+              <path d="M918 230 C904 262, 910 292, 934 318 C956 342, 954 374, 930 410" fill="none" stroke="#c45d25" stroke-width="7" stroke-linecap="round" opacity="0.66" />
+              <text x="880" y="470" class="dry-label">寒冷干燥</text>
+            </g>
+
+            <g id="comparisonLayer">
+              <rect x="122" y="94" width="316" height="142" rx="24" fill="#ffffff" opacity="0.88" />
+              <rect x="762" y="94" width="316" height="142" rx="24" fill="#ffffff" opacity="0.88" />
+              <text x="154" y="136" class="compare-title">夏季</text>
+              <text x="154" y="174" class="compare-text">大陆热、低压</text>
+              <text x="154" y="208" class="compare-text">海洋冷、高压</text>
+              <text x="794" y="136" class="compare-title">冬季</text>
+              <text x="794" y="174" class="compare-text">大陆冷、高压</text>
+              <text x="794" y="208" class="compare-text">海洋暖、低压</text>
+            </g>
+
+            <g id="summaryLayer">
+              <rect x="318" y="96" width="564" height="142" rx="28" fill="#17324d" opacity="0.9" />
+              <text x="600" y="146" text-anchor="middle" class="summary-title">季风形成链条</text>
+              <text x="600" y="192" text-anchor="middle" class="summary-text">海陆热力差异 → 气压差异 → 风向季节转换 → 水汽与降水变化</text>
+            </g>
+
+            <g id="legend" transform="translate(92 688)">
+              <rect width="1016" height="42" rx="21" fill="#ffffff" opacity="0.86" />
+              <line x1="34" y1="21" x2="98" y2="21" class="legend-blue" />
+              <text x="112" y="27">湿润夏季风</text>
+              <line x1="268" y1="21" x2="332" y2="21" class="legend-orange" />
+              <text x="346" y="27">干冷冬季风</text>
+              <circle cx="544" cy="21" r="7" class="legend-dot" />
+              <text x="562" y="27">水汽</text>
+              <line x1="690" y1="10" x2="672" y2="34" class="legend-rain" />
+              <text x="706" y="27">降水</text>
+            </g>
+          </svg>
+        </section>
+
+        <aside class="info-panel" aria-live="polite">
+          <div class="panel-head">
+            <span id="stepNumber">01</span>
+            <h2 id="stepTitle">海陆热力差异</h2>
+          </div>
+          <p id="stepText">大陆比热容小，夏季升温快；海洋比热容大，升温慢。冷热差异会进一步造成气压差异。</p>
+          <div class="key-points" id="keyPoints"></div>
+          <div class="mini-board">
+            <div>
+              <span class="mini-label">大陆</span>
+              <strong id="landState">升温快 · 低压</strong>
+            </div>
+            <div>
+              <span class="mini-label">海洋</span>
+              <strong id="seaState">升温慢 · 高压</strong>
+            </div>
+          </div>
+        </aside>
+      </div>
+
+      <section class="control-deck" aria-label="模型控制">
+        <div class="primary-controls">
+          <button class="icon-button" id="playPause" type="button" aria-label="播放">
+            <span id="playIcon">▶</span>
+            <span id="playText">播放</span>
+          </button>
+          <button class="icon-button secondary" id="resetBtn" type="button" aria-label="重置">
+            <span>↺</span>
+            <span>重置</span>
+          </button>
+          <button class="icon-button secondary" id="exportBtn" type="button" aria-label="导出矢量图">
+            <span>⇩</span>
+            <span>导出矢量图</span>
+          </button>
+        </div>
+
+        <div class="progress-block">
+          <label for="progressRange">
+            <span>演示进度</span>
+            <output id="progressOutput">0%</output>
+          </label>
+          <input id="progressRange" type="range" min="0" max="1000" value="0" />
+        </div>
+
+        <div class="step-tabs" aria-label="步骤按钮">
+          <button type="button" class="step-btn active" data-step="0">海陆差异</button>
+          <button type="button" class="step-btn" data-step="1">夏季</button>
+          <button type="button" class="step-btn" data-step="2">降水</button>
+          <button type="button" class="step-btn" data-step="3">冬季</button>
+          <button type="button" class="step-btn" data-step="4">对比</button>
+          <button type="button" class="step-btn" data-step="5">总结</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

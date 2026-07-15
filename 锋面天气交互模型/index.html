@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>锋面天气模型</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="title-block">
+        <p class="eyebrow">高中地理 · 天气系统</p>
+        <h1>锋面天气模型</h1>
+      </div>
+
+      <div class="control-bar" aria-label="模型控制">
+        <button class="control-button primary" id="playBtn" type="button" aria-label="播放模型">
+          <span class="button-icon" id="playIcon" aria-hidden="true">▶</span>
+          <span id="playText">播放</span>
+        </button>
+        <button class="control-button" id="resetBtn" type="button" aria-label="重置模型">
+          <span class="button-icon" aria-hidden="true">↺</span>
+          <span>重置</span>
+        </button>
+        <button class="control-button" id="exportBtn" type="button" aria-label="导出当前矢量图">
+          <span class="button-icon" aria-hidden="true">⇩</span>
+          <span>导出矢量图</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <section class="model-surface" aria-label="锋面天气交互模型">
+        <div class="timeline-row">
+          <output class="progress-readout" id="progressReadout" for="progressRange">0% · 气团</output>
+          <input id="progressRange" class="progress-range" type="range" min="0" max="100" value="0" step="1" aria-label="模型进度">
+          <span class="phase-chip" id="phaseChip">观察起点</span>
+        </div>
+
+        <div class="svg-wrap">
+          <svg id="weatherSvg" class="model-svg" viewBox="0 0 1200 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="svgTitle svgDesc">
+            <title id="svgTitle">高中地理锋面天气模型</title>
+            <desc id="svgDesc">交互展示冷气团、暖气团、冷锋、暖锋、锋面坡度、云雨区以及气温、气压、降水变化。</desc>
+            <style>
+              .svg-label { font: 700 24px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #18324d; }
+              .svg-small { font: 500 18px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #35465c; }
+              .svg-tiny { font: 500 15px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #526173; }
+              .scene-title { font: 700 22px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #20344f; }
+              .air-title { font: 700 25px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #132743; }
+              .air-sub { font: 500 17px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #304258; }
+              .chart-title { font: 700 19px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #24364f; }
+              .chart-text { font: 600 16px "Microsoft YaHei", "Noto Sans SC", sans-serif; fill: #34465f; }
+              .label-box { fill: rgba(255, 255, 255, 0.86); stroke: rgba(124, 143, 166, 0.45); stroke-width: 1.4; }
+              .front-line-cold { fill: none; stroke: #1f6bd6; stroke-width: 8; stroke-linecap: round; }
+              .front-line-warm { fill: none; stroke: #e65a3c; stroke-width: 8; stroke-linecap: round; }
+              .slope-helper { fill: none; stroke-width: 3; stroke-linecap: round; stroke-dasharray: 9 8; }
+              .flow-arrow { fill: none; stroke-width: 7; stroke-linecap: round; stroke-linejoin: round; }
+              .rain-line { stroke: #0e7490; stroke-width: 4; stroke-linecap: round; }
+              .rain-light { stroke: #0f8aa5; stroke-width: 3; stroke-linecap: round; opacity: 0.72; }
+              .cloud-stroke { stroke: #8799aa; stroke-width: 2; }
+              .ground-line { stroke: #789168; stroke-width: 4; stroke-linecap: round; }
+              .track-line { fill: none; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+              .chart-grid { stroke: #d7e0ea; stroke-width: 2; }
+              .chart-dot { stroke: #fff; stroke-width: 4; }
+            </style>
+            <defs>
+              <linearGradient id="skyGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#dbeafe"/>
+                <stop offset="58%" stop-color="#f7fbff"/>
+                <stop offset="100%" stop-color="#f8fafc"/>
+              </linearGradient>
+              <linearGradient id="groundGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#e7f0d2"/>
+                <stop offset="52%" stop-color="#eef4df"/>
+                <stop offset="100%" stop-color="#e1edd0"/>
+              </linearGradient>
+              <linearGradient id="coldGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#8fc8ff" stop-opacity="0.96"/>
+                <stop offset="100%" stop-color="#2b74d6" stop-opacity="0.72"/>
+              </linearGradient>
+              <linearGradient id="warmGrad" x1="0" y1="0" x2="1" y2="0">
+                <stop offset="0%" stop-color="#ffd6a8" stop-opacity="0.95"/>
+                <stop offset="100%" stop-color="#f9734d" stop-opacity="0.72"/>
+              </linearGradient>
+              <linearGradient id="cloudGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#ffffff"/>
+                <stop offset="100%" stop-color="#cbd5e1"/>
+              </linearGradient>
+              <marker id="arrowCold" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+                <path d="M1 1 L11 6 L1 11 Z" fill="#1f6bd6"/>
+              </marker>
+              <marker id="arrowWarm" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+                <path d="M1 1 L11 6 L1 11 Z" fill="#e65a3c"/>
+              </marker>
+              <marker id="arrowNeutral" markerWidth="12" markerHeight="12" refX="10" refY="6" orient="auto" markerUnits="strokeWidth">
+                <path d="M1 1 L11 6 L1 11 Z" fill="#4b5563"/>
+              </marker>
+            </defs>
+
+            <rect width="1200" height="720" fill="url(#skyGrad)"/>
+            <path d="M0 548 H1200 V720 H0 Z" fill="url(#groundGrad)"/>
+            <path class="ground-line" d="M0 548 H1200"/>
+            <text class="svg-tiny" x="26" y="535">地面</text>
+            <text class="svg-tiny" x="1120" y="535">近地面</text>
+
+            <g id="coldScene">
+              <rect class="label-box" x="44" y="36" width="318" height="44" rx="8"/>
+              <text class="scene-title" x="62" y="65">冷锋：冷气团主动推进</text>
+
+              <path d="M40 548 L40 308 C160 306 300 394 430 548 Z" fill="url(#coldGrad)" opacity="0.98"/>
+              <path d="M430 548 C505 426 580 320 650 258 C820 178 1008 192 1160 262 L1160 548 Z" fill="url(#warmGrad)" opacity="0.92"/>
+
+              <g>
+                <rect class="label-box" x="82" y="438" width="184" height="66" rx="8"/>
+                <text class="air-title" x="104" y="466">冷气团</text>
+                <text class="air-sub" x="104" y="492">冷、重、下沉</text>
+              </g>
+              <g>
+                <rect class="label-box" x="820" y="430" width="196" height="66" rx="8"/>
+                <text class="air-title" x="842" y="458">暖气团</text>
+                <text class="air-sub" x="842" y="484">暖、轻、上升</text>
+              </g>
+
+              <g id="coldFrontMover">
+                <path class="front-line-cold" d="M430 548 C505 426 580 320 650 258"/>
+                <path class="slope-helper" d="M474 522 C542 404 600 323 664 270" stroke="#174ea6" marker-end="url(#arrowCold)"/>
+                <rect class="label-box" x="646" y="312" width="172" height="38" rx="8"/>
+                <text class="svg-small" x="664" y="337">锋面坡度较陡</text>
+
+                <line x1="398" y1="548" x2="566" y2="548" stroke="#1f6bd6" stroke-width="7" stroke-linecap="round"/>
+                <polygon points="423,548 441,520 459,548" fill="#1f6bd6"/>
+                <polygon points="474,548 492,520 510,548" fill="#1f6bd6"/>
+                <polygon points="525,548 543,520 561,548" fill="#1f6bd6"/>
+                <rect class="label-box" x="470" y="504" width="84" height="34" rx="8"/>
+                <text class="svg-small" x="488" y="528">冷锋</text>
+
+                <g id="coldCloudZone" transform="translate(570 236)">
+                  <ellipse cx="2" cy="60" rx="70" ry="42" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="58" cy="44" rx="62" ry="48" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="-48" cy="42" rx="48" ry="36" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="18" cy="16" rx="44" ry="35" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <rect class="label-box" x="-56" y="-22" width="128" height="34" rx="8"/>
+                  <text class="svg-small" x="-35" y="2">积雨云</text>
+                </g>
+
+                <g id="coldRainZone">
+                  <line class="rain-line" x1="500" y1="372" x2="470" y2="528"/>
+                  <line class="rain-line" x1="535" y1="362" x2="505" y2="536"/>
+                  <line class="rain-line" x1="570" y1="350" x2="540" y2="538"/>
+                  <line class="rain-line" x1="606" y1="354" x2="578" y2="536"/>
+                  <line class="rain-line" x1="640" y1="372" x2="612" y2="532"/>
+                  <rect class="label-box" x="654" y="400" width="162" height="36" rx="8"/>
+                  <text class="svg-small" x="672" y="424">窄强降水区</text>
+                </g>
+              </g>
+
+              <g id="coldAirFlow">
+                <path class="flow-arrow" d="M150 488 C250 492 332 510 424 535" stroke="#1f6bd6" marker-end="url(#arrowCold)"/>
+                <text class="svg-small" x="172" y="472">冷空气推进</text>
+                <path class="flow-arrow" d="M516 486 C548 408 590 338 638 284" stroke="#e65a3c" marker-end="url(#arrowWarm)"/>
+                <text class="svg-small" x="600" y="456">暖空气被迫抬升</text>
+              </g>
+            </g>
+
+            <g id="warmScene" opacity="0">
+              <rect class="label-box" x="44" y="36" width="338" height="44" rx="8"/>
+              <text class="scene-title" x="62" y="65">暖锋：暖气团沿锋面爬升</text>
+
+              <path d="M40 548 L40 250 C205 190 418 218 585 320 C706 397 790 475 900 548 Z" fill="url(#warmGrad)" opacity="0.94"/>
+              <path d="M390 548 C542 456 706 398 930 370 L1160 400 L1160 548 Z" fill="url(#coldGrad)" opacity="0.96"/>
+
+              <g>
+                <rect class="label-box" x="134" y="424" width="196" height="66" rx="8"/>
+                <text class="air-title" x="156" y="452">暖气团</text>
+                <text class="air-sub" x="156" y="478">沿冷空气上方爬升</text>
+              </g>
+              <g>
+                <rect class="label-box" x="884" y="438" width="184" height="66" rx="8"/>
+                <text class="air-title" x="906" y="466">冷气团</text>
+                <text class="air-sub" x="906" y="492">冷、重、滞留</text>
+              </g>
+
+              <g id="warmFrontMover">
+                <path class="front-line-warm" d="M900 548 C780 470 645 370 370 278"/>
+                <path class="slope-helper" d="M862 522 C736 444 616 364 386 286" stroke="#d94a32" marker-end="url(#arrowWarm)"/>
+                <rect class="label-box" x="618" y="316" width="172" height="38" rx="8"/>
+                <text class="svg-small" x="636" y="341">锋面坡度较缓</text>
+
+                <line x1="746" y1="548" x2="944" y2="548" stroke="#e65a3c" stroke-width="7" stroke-linecap="round"/>
+                <path d="M770 548 A18 18 0 0 1 806 548" fill="none" stroke="#e65a3c" stroke-width="7" stroke-linecap="round"/>
+                <path d="M826 548 A18 18 0 0 1 862 548" fill="none" stroke="#e65a3c" stroke-width="7" stroke-linecap="round"/>
+                <path d="M882 548 A18 18 0 0 1 918 548" fill="none" stroke="#e65a3c" stroke-width="7" stroke-linecap="round"/>
+                <rect class="label-box" x="830" y="504" width="84" height="34" rx="8"/>
+                <text class="svg-small" x="848" y="528">暖锋</text>
+
+                <g id="warmCloudZone">
+                  <ellipse cx="574" cy="266" rx="72" ry="32" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="680" cy="300" rx="86" ry="34" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="786" cy="340" rx="96" ry="36" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <ellipse cx="884" cy="388" rx="82" ry="32" fill="url(#cloudGrad)" class="cloud-stroke"/>
+                  <rect class="label-box" x="642" y="226" width="184" height="34" rx="8"/>
+                  <text class="svg-small" x="660" y="250">层状云逐渐增厚</text>
+                </g>
+
+                <g id="warmRainZone">
+                  <line class="rain-light" x1="620" y1="338" x2="598" y2="530"/>
+                  <line class="rain-light" x1="664" y1="350" x2="642" y2="534"/>
+                  <line class="rain-light" x1="708" y1="362" x2="686" y2="536"/>
+                  <line class="rain-light" x1="752" y1="374" x2="730" y2="536"/>
+                  <line class="rain-light" x1="796" y1="388" x2="774" y2="538"/>
+                  <line class="rain-light" x1="840" y1="404" x2="818" y2="538"/>
+                  <line class="rain-light" x1="884" y1="422" x2="862" y2="538"/>
+                  <rect class="label-box" x="672" y="442" width="206" height="36" rx="8"/>
+                  <text class="svg-small" x="690" y="466">宽广连续性降水区</text>
+                </g>
+              </g>
+
+              <g id="warmAirFlow">
+                <path class="flow-arrow" d="M170 405 C330 360 500 356 734 430" stroke="#e65a3c" marker-end="url(#arrowWarm)"/>
+                <text class="svg-small" x="202" y="386">暖空气缓慢爬升</text>
+                <path class="flow-arrow" d="M1040 488 C990 486 940 496 900 526" stroke="#1f6bd6" marker-end="url(#arrowCold)"/>
+                <text class="svg-small" x="934" y="470">冷空气退让</text>
+              </g>
+            </g>
+
+            <g id="weatherPanel">
+              <rect x="62" y="590" width="1076" height="104" rx="8" fill="#ffffff" stroke="#cbd7e5" stroke-width="2"/>
+              <text class="chart-title" x="86" y="620">天气要素变化</text>
+              <text class="svg-tiny" x="86" y="646">过境前</text>
+              <text class="svg-tiny" x="86" y="672">锋线附近</text>
+
+              <g id="chartArea" transform="translate(210 604)">
+                <line class="chart-grid" x1="0" y1="12" x2="760" y2="12"/>
+                <line class="chart-grid" x1="0" y1="44" x2="760" y2="44"/>
+                <line class="chart-grid" x1="0" y1="76" x2="760" y2="76"/>
+                <path id="tempCurve" class="track-line" stroke="#e65a3c"/>
+                <path id="pressureCurve" class="track-line" stroke="#1f6bd6"/>
+                <path id="rainCurve" class="track-line" stroke="#0e7490"/>
+                <line id="chartCursor" x1="0" y1="0" x2="0" y2="90" stroke="#4b5563" stroke-width="2" stroke-dasharray="5 5"/>
+                <circle id="tempDot" class="chart-dot" r="7" fill="#e65a3c"/>
+                <circle id="pressureDot" class="chart-dot" r="7" fill="#1f6bd6"/>
+                <circle id="rainDot" class="chart-dot" r="7" fill="#0e7490"/>
+                <text class="chart-text" x="786" y="18" id="tempSvgValue">气温 24℃</text>
+                <text class="chart-text" x="786" y="50" id="pressureSvgValue">气压 1006 hPa</text>
+                <text class="chart-text" x="786" y="82" id="rainSvgValue">降水 5%</text>
+              </g>
+            </g>
+          </svg>
+        </div>
+      </section>
+
+      <aside class="info-panel" aria-live="polite">
+        <div class="panel-kicker" id="panelKicker">步骤 1 / 6</div>
+        <h2 id="stageTitle">气团</h2>
+        <p class="stage-summary" id="stageSummary">冷暖气团相遇前，先比较它们的温度、密度和气压特征。</p>
+
+        <div class="metric-grid" aria-label="天气要素读数">
+          <div class="metric-card">
+            <span class="metric-label">气温</span>
+            <strong id="tempValue">24℃</strong>
+            <span id="tempTrend">暖区较高，冷区较低</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">气压</span>
+            <strong id="pressureValue">1006 hPa</strong>
+            <span id="pressureTrend">冷气团一侧偏高</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">降水</span>
+            <strong id="rainValue">5%</strong>
+            <span id="rainTrend">云雨尚未发展</span>
+          </div>
+        </div>
+
+        <ul class="stage-points" id="stagePoints"></ul>
+
+        <div class="teacher-note">
+          <span class="note-label">课堂观察</span>
+          <p id="teacherPrompt">拖动进度条，注意冷暖气团交界面为什么不是垂直的。</p>
+        </div>
+      </aside>
+    </main>
+
+    <nav class="step-strip" aria-label="底部步骤建议">
+      <span class="step-strip-label">步骤建议</span>
+      <div class="step-buttons" id="stepButtons"></div>
+    </nav>
+  </div>
+</body>
+</html>
